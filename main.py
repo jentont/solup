@@ -1,6 +1,6 @@
 """Точка входа для хостингов, которые запускают `python main.py`.
 
-Поднимает сервер (API + Mini App + бот) на 0.0.0.0 и порту из переменной PORT (по умолчанию 8000).
+Поднимает сервер (API + Mini App + бот) на 0.0.0.0 и порту из переменной PORT (по умолчанию 3000).
 """
 
 import os
@@ -14,4 +14,4 @@ os.chdir(BACKEND)
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run("app.main:app", host="0.0.0.0", port=int(os.environ.get("PORT", "8000")))
+    uvicorn.run("app.main:app", host="0.0.0.0", port=int(os.environ.get("PORT", "3000")))
