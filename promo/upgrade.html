@@ -8,191 +8,227 @@
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@500;600;700;800&family=Unbounded:wght@700;800;900&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="common.css" />
 <style>
-  /* Ролик 8,5 с по мотивам рекламы RubUP: рулетка из трёх карточек под прожекторами → выигрыш крупно →
-     апгрейд с кольцом шанса → «Улучшено ×N» → «Апай подарки в SolUP».
+  /* Ролик 8,5 с по мотивам рекламы RubUP: рулетка из широких карточек под цветными прожекторами →
+     выигрыш крупно, вся рамка в золоте → апгрейд с кольцом шанса → «Улучшено ×2,86» → «Апай подарки в SolUP».
      Рисуется на 1280×672 и снимается с масштабом 1,5 → 1920×1008. */
-  :root { --grad: linear-gradient(135deg, #4b83ff, #6a4dff); --gold: #ffc93d; --gold-2: #ff9f1a; }
+  :root { --gold: #ffc93d; --gold-2: #ff9f1a; }
   #stage { width: 1280px; height: 672px; background: transparent; }
   body.bg-dark #stage { background: #000; }
   body.bg-green #stage { background: #00ff00; }
   html:has(body.bg-alpha), body.bg-alpha, body.bg-alpha #stage { background: transparent; }
 
+  /* рамка: толстый скошенный борт и тёмный «экран» внутри */
   .panel {
-    position: absolute; left: 24px; top: 24px; width: 1232px; height: 624px; border-radius: 48px; overflow: hidden;
-    background: radial-gradient(80% 70% at 50% 0%, #1c2350 0%, #12152e 55%, #0b0d1e 100%);
-    box-shadow: inset 0 0 0 2px rgba(130, 150, 255, 0.28), inset 0 2px 0 rgba(255, 255, 255, 0.12), 0 30px 80px rgba(0, 0, 0, 0.6);
+    position: absolute; left: 24px; top: 24px; width: 1232px; height: 624px; border-radius: 50px;
+    background: linear-gradient(180deg, #2b3170, #161a3c 40%, #10132c);
+    box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.22), inset 0 -2px 0 rgba(0, 0, 0, 0.4), 0 30px 80px rgba(0, 0, 0, 0.7);
   }
-  .floor { position: absolute; left: 22%; right: 22%; bottom: -46px; height: 92px; border-radius: 50%;
-    background: radial-gradient(closest-side, rgba(255, 201, 61, 0.75), rgba(255, 159, 26, 0.25) 55%, transparent); }
+  .goldframe { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; z-index: 32;
+    box-shadow: 0 0 0 3px #ffd34d, 0 0 50px 8px rgba(255, 190, 40, 0.7), inset 0 0 40px rgba(255, 190, 40, 0.5); }
+  .screen {
+    position: absolute; inset: 14px; border-radius: 38px; overflow: hidden;
+    background: radial-gradient(90% 80% at 50% 0%, #1b2150 0%, #0f1230 60%, #0a0c22 100%);
+    box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.45), inset 0 10px 30px rgba(0, 0, 0, 0.5);
+  }
+  .floor { position: absolute; left: 50%; bottom: -10px; width: 460px; height: 70px; margin-left: -230px; z-index: 30; pointer-events: none; border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(255, 214, 90, 0.95), rgba(255, 159, 26, 0.35) 55%, transparent); filter: blur(2px); }
   .layer { position: absolute; inset: 0; }
-  .tri { position: absolute; left: 50%; width: 0; height: 0; transform: translateX(-50%); z-index: 6;
-    border-left: 13px solid transparent; border-right: 13px solid transparent; filter: drop-shadow(0 0 8px var(--gold)); }
-  .tri.top { top: 10px; border-top: 16px solid var(--gold); }
-  .tri.bot { bottom: 10px; border-bottom: 16px solid var(--gold); }
+  .tri { position: absolute; left: 50%; width: 0; height: 0; transform: translateX(-50%); z-index: 31;
+    border-left: 14px solid transparent; border-right: 14px solid transparent; filter: drop-shadow(0 0 8px var(--gold)); }
+  .tri.top { top: 0; border-top: 18px solid var(--gold); }
+  .tri.bot { bottom: 0; border-bottom: 18px solid var(--gold); }
 
-  /* ===== рулетка ===== */
-  .rwin { position: absolute; left: 24px; top: 40px; width: 1184px; height: 500px; overflow: hidden; }
-  .rwin::before, .rwin::after { content: ""; position: absolute; top: 0; bottom: 0; width: 90px; z-index: 3; pointer-events: none; }
-  .rwin::before { left: 0; background: linear-gradient(90deg, #12152e, transparent); }
-  .rwin::after { right: 0; background: linear-gradient(-90deg, #12152e, transparent); }
-  .strip { position: absolute; left: 0; top: 34px; height: 430px; }
+  /* ===== рулетка: широкие карточки, цветной свет заливает карточку сверху ===== */
+  .strip { position: absolute; left: 0; top: 20px; height: 556px; filter: url(#mb); }
   .card {
-    position: absolute; top: 0; width: 336px; height: 430px; border-radius: 30px; overflow: hidden;
-    background: linear-gradient(180deg, #1f2448, #151936); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.07);
+    position: absolute; top: 0; width: 372px; height: 556px; border-radius: 30px; overflow: hidden;
+    background:
+      radial-gradient(90% 70% at 50% 0%, color-mix(in srgb, var(--sc) 55%, transparent), transparent 75%),
+      linear-gradient(180deg, color-mix(in srgb, var(--sc) 22%, #171b3c), #12152f 70%);
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.08), inset 0 2px 0 rgba(255, 255, 255, 0.12);
   }
-  /* прожектор сверху цвета редкости */
-  .card::before { content: ""; position: absolute; left: 0; right: 0; top: -10px; height: 340px;
-    background: linear-gradient(180deg, color-mix(in srgb, var(--sc) 70%, transparent), transparent 85%);
-    clip-path: polygon(38% 0, 62% 0, 100% 100%, 0 100%); opacity: 0.75; filter: blur(4px); }
-  .card::after { content: ""; position: absolute; left: 20%; right: 20%; top: 300px; height: 40px; border-radius: 50%;
-    background: radial-gradient(closest-side, color-mix(in srgb, var(--sc) 60%, transparent), transparent); }
-  .card img { position: absolute; left: 50%; top: 92px; width: 220px; height: 220px; margin-left: -110px; object-fit: contain; z-index: 1;
-    filter: drop-shadow(0 18px 20px rgba(0, 0, 0, 0.55)); }
-  .card .name .coin, .side + .coin { background: linear-gradient(135deg, #ffd34d, #ff9a1f); }
-  .card .name { position: absolute; left: 50%; bottom: 26px; transform: translateX(-50%); z-index: 2; white-space: nowrap;
-    padding: 9px 20px; border-radius: 999px; background: rgba(8, 10, 24, 0.75); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.22);
-    font: 700 20px var(--f-body); opacity: 0; }
-  .sc-violet { --sc: #8d6bff; } .sc-gold { --sc: #ffc93d; } .sc-pink { --sc: #ff5fb0; } .sc-blue { --sc: #4aa3ff; } .sc-green { --sc: #3ee08a; }
-  .card.win { box-shadow: inset 0 0 0 4px var(--gold), 0 0 60px rgba(255, 201, 61, 0.6); }
-  .rays { position: absolute; left: 50%; top: 50%; width: 1100px; height: 1100px; margin: -550px 0 0 -550px; pointer-events: none;
-    background: repeating-conic-gradient(from 0deg, rgba(255, 210, 90, 0.38) 0 6deg, transparent 6deg 18deg);
-    -webkit-mask: radial-gradient(closest-side, #000 18%, transparent 70%); mask: radial-gradient(closest-side, #000 18%, transparent 70%); }
+  .card .beam { position: absolute; left: -10%; right: -10%; top: -20px; height: 470px;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--sc) 85%, #fff 15%), color-mix(in srgb, var(--sc) 25%, transparent) 60%, transparent);
+    clip-path: polygon(36% 0, 64% 0, 100% 100%, 0 100%); filter: blur(16px); opacity: 0.85; }
+  .card .pool { position: absolute; left: 14%; right: 14%; top: 392px; height: 70px; border-radius: 50%;
+    background: radial-gradient(closest-side, color-mix(in srgb, var(--sc) 80%, #fff 10%), transparent); filter: blur(3px); }
+  .card img { position: absolute; left: 50%; top: 150px; width: 290px; height: 290px; margin-left: -145px; object-fit: contain; z-index: 1;
+    filter: drop-shadow(0 22px 22px rgba(0, 0, 0, 0.55)); }
+  .card .name { position: absolute; left: 50%; bottom: 30px; transform: translateX(-50%); z-index: 2; white-space: nowrap;
+    padding: 10px 22px; border-radius: 999px; background: rgba(8, 10, 24, 0.82); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3);
+    font: 800 21px var(--f-display); letter-spacing: -0.02em; opacity: 0; }
+  .card .wborder { position: absolute; inset: 0; border-radius: inherit; z-index: 3; opacity: 0;
+    box-shadow: inset 0 0 0 5px var(--gold), inset 0 0 50px rgba(255, 201, 61, 0.45); }
+  .sc-violet { --sc: #8a5cff; } .sc-gold { --sc: #ffbf2e; } .sc-pink { --sc: #ff4fae; } .sc-blue { --sc: #3f9bff; } .sc-green { --sc: #2fd98a; }
+  /* выигрышная карточка поверх рамки — при выигрыше вылезает за её края, как у образца */
+  .hero { position: absolute; left: 430px; top: 34px; z-index: 33; opacity: 0; transform-origin: 50% 50%;
+    box-shadow: 0 0 0 4px #ffd34d, 0 0 70px 14px rgba(255, 190, 40, 0.75); }
+  .hero .name { opacity: 1; }
+  .heroglow { position: absolute; left: 50%; top: 50%; width: 900px; height: 900px; margin: -450px 0 0 -450px; z-index: 32; pointer-events: none; opacity: 0;
+    background: radial-gradient(closest-side, rgba(255, 200, 60, 0.45), rgba(255, 160, 30, 0.12) 50%, transparent 70%); }
+  .rays { position: absolute; left: 50%; top: 50%; width: 1500px; height: 1500px; margin: -750px 0 0 -750px; pointer-events: none; opacity: 0;
+    background: repeating-conic-gradient(from 0deg, rgba(255, 214, 100, 0.42) 0 5deg, transparent 5deg 15deg);
+    -webkit-mask: radial-gradient(closest-side, #000 12%, transparent 72%); mask: radial-gradient(closest-side, #000 12%, transparent 72%); }
 
-  .spin-btn {
-    position: absolute; left: 50%; top: 420px; z-index: 7; display: flex; align-items: center; gap: 14px;
-    padding: 22px 54px; border-radius: 22px; background: var(--grad); color: #fff;
-    font: 800 32px var(--f-display); letter-spacing: -0.02em; text-transform: uppercase; white-space: nowrap;
-    box-shadow: 0 0 0 6px rgba(10, 12, 30, 0.85), inset 0 2px 0 rgba(255, 255, 255, 0.35), 0 14px 40px rgba(90, 100, 255, 0.55);
+  /* глянцевые кнопки: светлая полоса сверху, тёмное кольцо, свечение */
+  .gloss {
+    position: absolute; z-index: 25; display: flex; align-items: center; justify-content: center; gap: 14px; overflow: hidden;
+    border-radius: 22px; color: #fff; font: 900 32px var(--f-display); letter-spacing: -0.01em; text-transform: uppercase; white-space: nowrap;
   }
-  .tap { position: absolute; width: 90px; height: 90px; margin: -45px 0 0 -45px; border-radius: 50%; z-index: 20;
+  .gloss::before { content: ""; position: absolute; left: 4px; right: 4px; top: 4px; height: 46%; border-radius: 18px 18px 40% 40% / 18px 18px 14px 14px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.08)); }
+  .gloss > * { position: relative; }
+  .gloss.blue { background: linear-gradient(180deg, #6fd0ff 0%, #2ea6ff 48%, #1677e6 100%);
+    box-shadow: 0 0 0 7px #0b0e28, 0 0 0 9px rgba(120, 190, 255, 0.35), 0 16px 40px rgba(40, 150, 255, 0.6); text-shadow: 0 2px 0 rgba(10, 60, 140, 0.5); }
+  .gloss.gold { background: linear-gradient(180deg, #ffe98c 0%, #ffcc3a 50%, #f0a114 100%); color: #3a2400; text-transform: none; font-size: 28px;
+    box-shadow: 0 0 0 2px rgba(255, 240, 180, 0.6), 0 12px 34px rgba(255, 180, 30, 0.5); }
+
+  .tap { position: absolute; width: 90px; height: 90px; margin: -45px 0 0 -45px; border-radius: 50%; z-index: 40;
     border: 4px solid rgba(255, 255, 255, 0.9); box-shadow: 0 0 24px rgba(255, 255, 255, 0.5); opacity: 0; }
   .tap::after { content: ""; position: absolute; left: 50%; top: 50%; width: 22px; height: 22px; margin: -11px; border-radius: 50%; background: rgba(255, 255, 255, 0.9); }
-  .spark { position: absolute; width: 22px; height: 22px; z-index: 12; background: #fff8d6; opacity: 0;
-    clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%); filter: drop-shadow(0 0 6px var(--gold)); }
+  .spark { position: absolute; width: 26px; height: 26px; margin: -13px 0 0 -13px; z-index: 35; background: #fff6c8; opacity: 0;
+    clip-path: polygon(50% 0, 58% 42%, 100% 50%, 58% 58%, 50% 100%, 42% 58%, 0 50%, 42% 42%); filter: drop-shadow(0 0 8px var(--gold)); }
 
   /* ===== апгрейд ===== */
-  .ucard { position: absolute; top: 30px; width: 330px; height: 396px; border-radius: 28px;
-    background: linear-gradient(180deg, #1f2448, #161a38); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.07);
-    display: flex; flex-direction: column; align-items: center; padding-top: 34px; }
-  .ucard img { width: 200px; height: 200px; object-fit: contain; filter: drop-shadow(0 16px 18px rgba(0, 0, 0, 0.55)); }
-  .ucard b { margin-top: 14px; font: 800 30px var(--f-display); letter-spacing: -0.03em; }
+  .ucard { position: absolute; top: 16px; width: 340px; height: 420px; border-radius: 28px; overflow: hidden;
+    background: radial-gradient(90% 60% at 50% 30%, #262d64, #171b3d 75%); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.07), inset 0 2px 0 rgba(255, 255, 255, 0.1);
+    display: flex; flex-direction: column; align-items: center; padding-top: 22px; }
+  .ucard img { width: 240px; height: 240px; object-fit: contain; filter: drop-shadow(0 18px 20px rgba(0, 0, 0, 0.6)); }
+  .ucard b { margin-top: 8px; font: 800 30px var(--f-display); letter-spacing: -0.03em; }
   .ucard .sub { margin-top: 6px; display: flex; gap: 8px; align-items: center; font: 600 17px var(--f-body); color: #9aa0c8; }
-  .ucard .sub i { font-style: normal; padding: 3px 9px; border-radius: 8px; background: rgba(120, 140, 255, 0.18); color: #b9c4ff; font-weight: 700; }
-  .ucard .price { margin-top: 8px; display: flex; align-items: center; gap: 8px; font: 800 22px var(--f-display); }
-  .ucard .price .coin { background: linear-gradient(135deg, #ffd34d, #ff9a1f); }
+  .ucard .sub i { font-style: normal; padding: 2px 9px; border-radius: 8px; background: rgba(255, 201, 61, 0.16); color: var(--gold); font: 800 14px var(--f-display); }
+  .ucard .price { margin-top: 8px; display: flex; align-items: center; gap: 8px; font: 800 23px var(--f-display); }
   .ucard .tag { padding: 3px 10px; border-radius: 8px; background: rgba(255, 201, 61, 0.18); color: var(--gold); font: 800 15px var(--f-display); }
   .ucard .inv { display: none; color: #3dff9a; background: rgba(61, 255, 154, 0.14); }
+  .ucard .wborder { position: absolute; inset: 0; border-radius: inherit; opacity: 0; box-shadow: inset 0 0 0 4px var(--gold), inset 0 0 40px rgba(255, 201, 61, 0.35); }
 
-  .gauge { position: absolute; left: 442px; top: 40px; width: 348px; height: 348px; }
+  .gauge { position: absolute; left: 400px; top: 14px; width: 404px; height: 404px; }
   .gauge svg { position: absolute; inset: 0; overflow: visible; }
-  .gauge .core { position: absolute; inset: 34px; border-radius: 50%; background: radial-gradient(circle at 50% 40%, #232a5c, #0e1128 75%);
-    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.06); display: grid; place-items: center; align-content: center; }
-  .gauge .pct { font: 900 50px var(--f-display); letter-spacing: -0.04em; }
-  .gauge .lbl { font: 600 16px var(--f-body); color: #8d93c0; margin-top: -2px; }
-  .gauge .prize { position: absolute; left: 50%; top: 50%; width: 150px; height: 150px; margin: -104px 0 0 -75px; object-fit: contain; opacity: 0;
-    filter: drop-shadow(0 12px 16px rgba(0, 0, 0, 0.5)); }
-  .gauge .done { position: absolute; left: 0; right: 0; top: 246px; text-align: center; font: 800 21px var(--f-display); letter-spacing: -0.02em; color: var(--gold); opacity: 0; }
-  .needle { position: absolute; left: 174px; top: 174px; width: 0; height: 0; z-index: 3; }
-  .needle i { position: absolute; left: -16px; top: -196px; border-left: 16px solid transparent; border-right: 16px solid transparent;
-    border-top: 26px solid #fff; filter: drop-shadow(0 0 8px #fff); }
+  .gauge .core { position: absolute; inset: 54px; border-radius: 50%; background: radial-gradient(circle at 50% 38%, #262e6a, #0d1029 72%);
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.06), 0 0 40px rgba(0, 0, 0, 0.5); display: grid; place-items: center; align-content: center; }
+  .gauge .pct { white-space: nowrap; font: 900 52px var(--f-display); letter-spacing: -0.04em;
+    background: linear-gradient(180deg, #fff, #c9cfee); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .gauge .lbl { font: 600 17px var(--f-body); color: #8d93c0; margin-top: -4px; }
+  .gauge .prize { position: absolute; left: 50%; top: 50%; width: 180px; height: 180px; margin: -118px 0 0 -90px; object-fit: contain; opacity: 0;
+    filter: drop-shadow(0 14px 18px rgba(0, 0, 0, 0.55)); }
+  .gauge .done { position: absolute; left: 0; right: 0; top: 262px; text-align: center; font: 800 22px var(--f-display); letter-spacing: -0.02em; color: var(--gold);
+    text-shadow: 0 0 14px rgba(255, 190, 40, 0.6); opacity: 0; }
+  .ptr { position: absolute; left: 202px; top: 202px; width: 0; height: 0; z-index: 3; }
+  .ptr i { position: absolute; left: -18px; top: -214px; width: 36px; height: 40px;
+    background: linear-gradient(180deg, #fff, #ffe9a6); clip-path: polygon(50% 100%, 0 0, 50% 22%, 100% 0); filter: drop-shadow(0 0 10px rgba(255, 220, 120, 0.9)); }
 
-  .bar { position: absolute; left: 30px; right: 30px; top: 448px; height: 76px; display: grid; grid-template-columns: 330px 1fr 330px; gap: 16px; }
-  .bal { border-radius: 18px; background: #1a1e3c; box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.06); padding: 12px 18px; position: relative; }
+  .bar { position: absolute; left: 0; right: 0; top: 452px; height: 78px; display: grid; grid-template-columns: 340px 1fr 340px; gap: 16px; padding: 0 16px; }
+  .bal { border-radius: 18px; background: #191d40; box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.06); padding: 13px 18px; position: relative; }
   .bal b { font: 700 18px var(--f-body); } .bal small { display: block; font: 500 14px var(--f-body); color: #7f86b5; }
-  .bal .slider { position: absolute; left: 18px; right: 18px; bottom: 10px; height: 5px; border-radius: 3px; background: #2a3060; }
+  .bal .slider { position: absolute; left: 18px; right: 18px; bottom: 11px; height: 5px; border-radius: 3px; background: #2a3060; }
   .bal .slider::before { content: ""; position: absolute; left: -2px; top: -5px; width: 15px; height: 15px; border-radius: 50%; background: #fff; }
   .bal .val { position: absolute; right: 18px; top: 16px; font: 800 20px var(--f-display); display: flex; gap: 8px; align-items: center; }
-  .bal .val .coin { background: linear-gradient(135deg, #ffd34d, #ff9a1f); }
-  .up-btn { border-radius: 18px; background: var(--grad); display: flex; align-items: center; justify-content: center; gap: 12px;
-    font: 800 28px var(--f-display); letter-spacing: -0.02em; box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.3), 0 10px 30px rgba(90, 100, 255, 0.45); }
+  .bar .gloss { position: relative; z-index: 1; height: 78px; }
   .chips { display: grid; grid-template-columns: repeat(6, 1fr); gap: 7px; }
-  .chips span { border-radius: 14px; background: #1a1e3c; box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.06);
-    display: grid; place-items: center; font: 800 17px var(--f-display); }
+  .chips span { border-radius: 14px; background: #191d40; box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.06);
+    display: grid; place-items: center; font: 800 17px var(--f-display); color: #c9cdea; }
 
-  /* монета рисуется стилями: маска из SVG в локальном файле браузер не грузит */
+  /* монета стилями: маска из SVG в локальном файле браузер не грузит */
   .coin { display: inline-block; width: 0.85em; height: 0.85em; border-radius: 50%; vertical-align: -0.1em; -webkit-mask: none; mask: none;
     background: radial-gradient(circle at 35% 30%, #fff3b0, #ffc21f 50%, #c07800) !important; box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.35), inset 0 -2px 0 rgba(0, 0, 0, 0.2); }
 
   /* ===== финал ===== */
-  .apai { position: absolute; left: 0; right: 0; top: 118px; text-align: center; font: 900 44px var(--f-display); letter-spacing: -0.02em; }
-  .apai em { font-style: normal; background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent;
-    filter: drop-shadow(0 0 14px rgba(110, 120, 255, 0.6)); }
-  .logo { position: absolute; left: 50%; top: 188px; width: 640px; margin-left: -320px; filter: drop-shadow(0 18px 30px rgba(0, 0, 0, 0.6)); }
-  .swoosh { position: absolute; left: 50%; top: 392px; width: 380px; margin-left: -150px; overflow: visible; }
-  .side { position: absolute; object-fit: contain; filter: drop-shadow(0 18px 22px rgba(0, 0, 0, 0.6)); }
-  .mult { position: absolute; padding: 6px 14px; border-radius: 12px; background: rgba(255, 201, 61, 0.16); box-shadow: inset 0 0 0 2px rgba(255, 201, 61, 0.45);
-    color: var(--gold); font: 800 22px var(--f-display); }
+  .spot { position: absolute; left: 50%; top: 40%; width: 900px; height: 520px; margin: -260px 0 0 -450px; border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(90, 110, 255, 0.35), rgba(255, 190, 60, 0.08) 60%, transparent); }
+  .apai { position: absolute; left: 0; right: 0; top: 74px; text-align: center; font: 900 46px var(--f-display); letter-spacing: -0.01em;
+    filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.6)); }
+  .apai span { background: linear-gradient(180deg, #ffffff 30%, #c3cbef); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .apai em { font-style: normal; background: linear-gradient(180deg, #ffe98c, #ffb21a); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .logo { position: absolute; left: 50%; top: 156px; width: 720px; height: 279px; margin-left: -360px; overflow: visible;
+    filter: drop-shadow(0 0 30px rgba(80, 140, 255, 0.45)) drop-shadow(0 20px 30px rgba(0, 0, 0, 0.6)); }
+  .swoosh { position: absolute; left: 50%; top: 394px; width: 430px; margin-left: -150px; overflow: visible; filter: drop-shadow(0 0 10px rgba(255, 200, 60, 0.7)); }
+  .side { position: absolute; object-fit: contain; filter: drop-shadow(0 22px 24px rgba(0, 0, 0, 0.65)); }
+  .side.far { filter: blur(2px) drop-shadow(0 14px 16px rgba(0, 0, 0, 0.6)); opacity: 0.85; }
+  .glowp { position: absolute; width: 280px; height: 60px; border-radius: 50%; background: radial-gradient(closest-side, rgba(255, 200, 70, 0.55), transparent); }
+  .mult { position: absolute; padding: 7px 16px; border-radius: 12px; background: rgba(255, 201, 61, 0.14); box-shadow: inset 0 0 0 2px rgba(255, 201, 61, 0.55);
+    color: var(--gold); font: 800 24px var(--f-display); }
 </style>
 </head>
 <body class="bg-dark">
+<svg width="0" height="0" style="position: absolute"><filter id="mb" x="-20%" y="0" width="140%" height="100%"><feGaussianBlur id="mbBlur" stdDeviation="0 0" /></filter></svg>
 <div id="stage">
-  <div class="panel">
-    <div class="floor" id="floor"></div>
-
-    <!-- A. рулетка -->
-    <div class="layer" id="sA">
-      <div class="rwin">
+  <div class="panel" id="panel">
+    <div class="screen">
+      <!-- A. рулетка -->
+      <div class="layer" id="sA">
         <div class="rays" id="raysA"></div>
         <div class="strip" id="strip"></div>
       </div>
-      <div class="spin-btn" id="spinBtn">
-        <svg width="34" height="34" viewBox="0 0 24 24"><path fill="#fff" d="M21.9 3.6 18.6 19c-.2 1.1-.9 1.4-1.8.9l-5-3.7-2.4 2.3c-.3.3-.5.5-1 .5l.4-5.1 9.2-8.3c.4-.4-.1-.6-.6-.2L6 12.6 1.1 11c-1-.3-1.1-1 .2-1.5L20.6 2.1c.9-.3 1.6.2 1.3 1.5z"/></svg>
-        Крутить
+
+      <!-- B. апгрейд -->
+      <div class="layer" id="sB">
+        <div class="rays" id="raysB" style="left: 602px; top: 216px"></div>
+        <div class="ucard" id="from" style="left: 16px">
+          <img src="../webapp/public/gifts/lowrider.webp" />
+          <b>Low Rider</b>
+          <div class="sub">эпический <i>вход</i></div>
+          <div class="price">5 950 <i class="coin"></i></div>
+        </div>
+        <div class="gauge" id="gauge">
+          <svg viewBox="0 0 404 404">
+            <defs>
+              <linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#ffe27a" /><stop offset="1" stop-color="#ff9f1a" /></linearGradient>
+            </defs>
+            <g id="ticks"></g>
+            <circle cx="202" cy="202" r="166" fill="none" stroke="#1b2052" stroke-width="26" />
+            <circle id="arc" cx="202" cy="202" r="166" fill="none" stroke="url(#g)" stroke-width="26" stroke-linecap="round"
+                    stroke-dasharray="0 1043" style="filter: drop-shadow(0 0 12px rgba(255, 190, 40, 0.75))" />
+            <circle id="tip" r="9" fill="#fff8d6" style="filter: drop-shadow(0 0 10px #ffd34d)" />
+          </svg>
+          <div class="core" id="core"><div class="pct" id="pct">0,00 %</div><div class="lbl">шанс</div></div>
+          <img class="prize" id="prize" src="../webapp/public/gifts/heroichelmet.webp" />
+          <div class="done" id="done">Улучшено ×2,86</div>
+          <div class="ptr" id="ptr"><i></i></div>
+        </div>
+        <div class="ucard" id="to" style="left: 848px">
+          <img src="../webapp/public/gifts/heroichelmet.webp" />
+          <b>Heroic Helmet</b>
+          <div class="sub">легендарный <i>цель</i></div>
+          <div class="price">17 000 <i class="coin"></i> <span class="tag" id="tagX">×2,86</span><span class="tag inv" id="tagInv">✓ В инвентаре</span></div>
+          <div class="wborder" id="toB"></div>
+        </div>
+        <div class="bar">
+          <div class="bal"><b>Сумма баланса</b><small>макс 4 879</small><div class="val">0 <i class="coin"></i></div><div class="slider"></div></div>
+          <div class="gloss gold" id="upBtn"><svg width="26" height="26" viewBox="0 0 24 24"><path fill="#3a2400" d="M12 4 4 12l1.4 1.4L12 6.8l6.6 6.6L20 12zm0 6-8 8 1.4 1.4 6.6-6.6 6.6 6.6L20 18z"/></svg><span>Улучшить</span></div>
+          <div class="chips"><span>×2</span><span>×4</span><span>×8</span><span>35%</span><span>55%</span><span>75%</span></div>
+        </div>
+      </div>
+
+      <!-- C. финал -->
+      <div class="layer" id="sC">
+        <div class="spot"></div>
+        <img class="side far" id="cTL" src="../webapp/public/gifts/lolpop.webp" style="left: 54px; top: 34px; width: 120px; height: 120px" />
+        <img class="side far" id="cTR" src="../webapp/public/gifts/perfumebottle.webp" style="right: 60px; top: 30px; width: 120px; height: 120px" />
+        <div class="glowp" style="left: 30px; top: 470px"></div><div class="glowp" style="right: 26px; top: 470px"></div>
+        <img class="side" id="cL" src="../webapp/public/gifts/lowrider.webp" style="left: 20px; top: 210px; width: 300px; height: 300px" />
+        <img class="side" id="cR" src="../webapp/public/gifts/heroichelmet.webp" style="right: 26px; top: 196px; width: 290px; height: 290px" />
+        <div class="mult" id="cX" style="right: 118px; top: 492px">×2,86</div>
+        <div class="apai" id="apai"><em>АПАЙ</em> <span>ПОДАРКИ В</span></div>
+        <!-- логотип встроен, чтобы залить буквы градиентом -->
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="-4.0 26.0 248.2 96.0" class="logo" id="logo"><defs><linearGradient id="lgW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="0.55" stop-color="#eef1ff"/><stop offset="1" stop-color="#b9c3ef"/></linearGradient>
+<linearGradient id="lgB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6fc0ff"/><stop offset="1" stop-color="#4b5cff"/></linearGradient></defs><path fill="url(#lgW)" d="M6.6000000000000005 82.0Q14.700000000000001 86.9 19.400000000000002 86.9Q22.400000000000002 86.9 22.400000000000002 84.8Q22.400000000000002 83.3 17.2 80.9Q4.7 75.8 4.7 64.19999999999999Q4.7 56.8 10.1 52.9Q15.5 49.0 23.05 49.0Q30.6 49.0 35.85 50.599999999999994Q41.1 52.199999999999996 41.1 54.8Q41.1 57.0 38.95 60.599999999999994Q36.800000000000004 64.19999999999999 36.0 64.5Q31.700000000000003 62.1 26.700000000000003 62.1Q24.0 62.1 24.0 64.0Q24.0 65.19999999999999 25.05 66.05Q26.1 66.9 28.900000000000002 68.15Q31.700000000000003 69.4 33.55 70.4Q35.4 71.4 37.7 73.2Q42.5 77.0 42.5 83.1Q42.5 91.1 37.2 96.05Q31.900000000000002 101.0 21.200000000000003 101.0Q14.100000000000001 101.0 8.3 98.6Q2.5 96.2 2.5 92.0Q2.5 89.2 3.85 86.1Q5.2 83.0 6.6000000000000005 82.0Z"/><mask id="cut-dark"><rect x="43.9" y="47.8" width="54.4" height="54.4" fill="#fff"/><path d="M54.8,80.2 L71.1,66.6 L87.3,80.2" fill="none" stroke="#000" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round"/></mask><circle cx="71.1" cy="75.0" r="26.2" fill="url(#lgB)" mask="url(#cut-dark)"/><path fill="url(#lgW)" d="M119.80000000000001 99.2Q119.80000000000001 100.1 109.60000000000001 100.1Q101.60000000000001 100.0 101.60000000000001 99.3V31.200000000000003Q101.60000000000001 29.700000000000003 111.30000000000001 29.700000000000003Q119.80000000000001 30.0 119.80000000000001 30.700000000000003ZM128.3 50.599999999999994Q128.3 49.5 136.9 49.5Q145.5 49.5 145.5 50.599999999999994V79.8Q145.5 84.8 148.70000000000002 84.8Q151.10000000000002 84.8 154.10000000000002 82.7V50.599999999999994Q154.10000000000002 49.599999999999994 162.60000000000002 49.599999999999994Q171.10000000000002 49.599999999999994 171.10000000000002 50.599999999999994V83.4H173.70000000000002Q177.10000000000002 83.4 177.10000000000002 89.9Q177.10000000000002 93.2 175.70000000000002 96.6Q173.70000000000002 101.0 170.3 101.0Q163.60000000000002 101.0 160.4 95.5L160.3 95.6Q154.20000000000002 101.0 147.20000000000002 101.0Q137.5 101.0 132.9 96.15Q128.3 91.3 128.3 80.1ZM204.70000000000002 118.2Q204.70000000000002 118.9 196.15000000000003 118.9Q187.60000000000002 118.9 187.60000000000002 118.2V66.69999999999999H184.20000000000002Q181.8 66.69999999999999 180.9 62.3Q180.60000000000002 60.9 180.60000000000002 58.7Q180.60000000000002 56.5 182.00000000000003 53.5Q184.00000000000003 49.099999999999994 188.4 49.099999999999994Q191.3 49.099999999999994 193.75 50.449999999999996Q196.20000000000002 51.8 197.15000000000003 52.949999999999996Q198.10000000000002 54.099999999999994 198.10000000000002 54.3Q204.8 49.099999999999994 212.60000000000002 49.099999999999994Q220.40000000000003 49.099999999999994 226.00000000000003 55.14999999999999Q231.60000000000002 61.199999999999996 231.60000000000002 73.85Q231.60000000000002 86.5 226.00000000000003 93.45Q220.40000000000003 100.4 211.8 100.4Q207.90000000000003 100.4 204.70000000000002 100.0ZM208.8 66.6Q207.10000000000002 66.6 205.50000000000003 67.69999999999999V85.4Q207.20000000000002 85.6 208.25 85.6Q209.3 85.6 209.90000000000003 85.6Q214.00000000000003 85.2 214.00000000000003 75.1Q214.00000000000003 66.6 208.8 66.6Z"/></svg>
+
+        <svg class="swoosh" id="swoosh" viewBox="0 0 430 80"><defs><linearGradient id="sw" x1="0" x2="1"><stop offset="0" stop-color="#ffe98c" /><stop offset="1" stop-color="#ffaa1a" /></linearGradient></defs>
+          <path id="swPath" d="M10 34 C 120 78, 270 78, 380 24" fill="none" stroke="url(#sw)" stroke-width="16" stroke-linecap="round" />
+          <path id="swHead" d="M352 10 L394 20 L376 56" fill="none" stroke="#ffb21a" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" /></svg>
       </div>
     </div>
-
-    <!-- B. апгрейд -->
-    <div class="layer" id="sB">
-      <div class="rays" id="raysB" style="left: 616px; top: 240px"></div>
-      <div class="ucard" id="from" style="left: 30px">
-        <img src="../webapp/public/gifts/lowrider.webp" />
-        <b>Low Rider</b>
-        <div class="sub">эпический <i>вход</i></div>
-        <div class="price">5 950 <i class="coin"></i></div>
-      </div>
-      <div class="gauge" id="gauge">
-        <svg viewBox="0 0 348 348">
-          <circle cx="174" cy="174" r="160" fill="none" stroke="#1d2250" stroke-width="22" />
-          <circle cx="174" cy="174" r="160" fill="none" stroke="rgba(255,255,255,.05)" stroke-width="2" stroke-dasharray="2 12" />
-          <defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#ffd34d" /><stop offset="1" stop-color="#ff9f1a" /></linearGradient></defs>
-          <circle id="arc" cx="174" cy="174" r="160" fill="none" stroke="url(#g)" stroke-width="22" stroke-linecap="round"
-                  transform="rotate(-90 174 174)" stroke-dasharray="0 1006" style="filter: drop-shadow(0 0 10px rgba(255,201,61,.7))" />
-        </svg>
-        <div class="core" id="core"><div class="pct" id="pct">0 %</div><div class="lbl">шанс</div></div>
-        <img class="prize" id="prize" src="../webapp/public/gifts/preciouspeach.webp" />
-        <div class="done" id="done">Улучшено ×8,40</div>
-        <div class="needle" id="needle"><i></i></div>
-      </div>
-      <div class="ucard" id="to" style="left: 872px">
-        <img src="../webapp/public/gifts/preciouspeach.webp" />
-        <b>Precious Peach</b>
-        <div class="sub">легендарный <i>цель</i></div>
-        <div class="price">50 000 <i class="coin"></i> <span class="tag" id="tagX">×8,40</span><span class="tag inv" id="tagInv">✓ В инвентаре</span></div>
-      </div>
-      <div class="bar">
-        <div class="bal"><b>Сумма баланса</b><small>макс 4 879</small><div class="val">0 <i class="coin"></i></div><div class="slider"></div></div>
-        <div class="up-btn" id="upBtn"><svg width="26" height="26" viewBox="0 0 24 24"><path fill="#fff" d="M12 4 4 12l1.4 1.4L12 6.8l6.6 6.6L20 12zm0 6-8 8 1.4 1.4 6.6-6.6 6.6 6.6L20 18z"/></svg>Улучшить</div>
-        <div class="chips"><span>×2</span><span>×4</span><span>×8</span><span>35%</span><span>55%</span><span>75%</span></div>
-      </div>
-    </div>
-
-    <!-- C. финал -->
-    <div class="layer" id="sC">
-      <img class="side" id="cL" src="../webapp/public/gifts/lowrider.webp" style="left: 50px; top: 230px; width: 250px; height: 250px" />
-      <img class="side" id="cR" src="../webapp/public/gifts/preciouspeach.webp" style="right: 60px; top: 220px; width: 240px; height: 240px" />
-      <div class="mult" id="cX" style="right: 128px; top: 470px">×8,40</div>
-      <img class="side" id="cTL" src="../webapp/public/gifts/lolpop.webp" style="left: 80px; top: 50px; width: 110px; height: 110px" />
-      <img class="side" id="cTR" src="../webapp/public/gifts/perfumebottle.webp" style="right: 90px; top: 50px; width: 110px; height: 110px" />
-      <div class="apai" id="apai"><em>АПАЙ</em> ПОДАРКИ В</div>
-      <img class="logo" id="logo" src="../webapp/public/brand/solup-word-dark.svg" />
-      <svg class="swoosh" id="swoosh" viewBox="0 0 380 70"><defs><linearGradient id="sw" x1="0" x2="1"><stop offset="0" stop-color="#4b83ff" /><stop offset="1" stop-color="#8f6bff" /></linearGradient></defs>
-        <path id="swPath" d="M10 30 C 110 70, 250 70, 340 22" fill="none" stroke="url(#sw)" stroke-width="12" stroke-linecap="round" />
-        <path id="swHead" d="M318 10 L352 18 L336 48" fill="none" stroke="#8f6bff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" /></svg>
-    </div>
-
+    <div class="floor"></div>
     <i class="tri top" id="triT"></i><i class="tri bot" id="triB"></i>
+    <div class="gloss blue" id="spinBtn" style="left: 50%; top: 452px; width: 330px; height: 84px">
+      <svg width="34" height="34" viewBox="0 0 24 24"><path fill="#fff" d="M21.9 3.6 18.6 19c-.2 1.1-.9 1.4-1.8.9l-5-3.7-2.4 2.3c-.3.3-.5.5-1 .5l.4-5.1 9.2-8.3c.4-.4-.1-.6-.6-.2L6 12.6 1.1 11c-1-.3-1.1-1 .2-1.5L20.6 2.1c.9-.3 1.6.2 1.3 1.5z"/></svg>
+      <span>Крутить</span>
+    </div>
+    <div class="goldframe" id="goldframe"></div>
+    <div class="heroglow" id="heroglow"></div>
+    <div class="card sc-gold hero" id="hero"><div class="beam"></div><div class="pool"></div><img src="../webapp/public/gifts/lowrider.webp"><div class="name">Low Rider · 5 950 <i class="coin"></i></div></div>
     <div class="tap" id="tap"></div>
-    <div class="spark" id="sp1"></div><div class="spark" id="sp2"></div><div class="spark" id="sp3"></div><div class="spark" id="sp4"></div>
+    <div id="sparks"></div>
   </div>
 </div>
 
@@ -203,31 +239,69 @@ document.body.className = "bg-" + (params.get("bg") || "dark");
 
 const DUR = 8.5;
 const T = {
-  tap1: 0.55, spin: [0.68, 2.35], win1: [2.35, 3.2], toB: [3.15, 3.5],
-  fill: [3.55, 4.3], tap2: 4.55, run: [4.68, 5.95], win2: [5.95, 6.8], toC: [6.75, 7.1],
+  tap1: 0.6, spin: [0.72, 2.35], win1: [2.35, 3.2], toB: [3.15, 3.5],
+  fill: [3.55, 4.35], tap2: 4.6, run: [4.72, 5.95], win2: [5.95, 6.8], toC: [6.75, 7.1],
 };
-const CHANCE = 0.1131;
+const CHANCE = 0.3325;
 
-// --- лента рулетки: [подарок, прожектор] ---
+// --- лента рулетки: [подарок, цвет прожектора] ---
 const ITEMS = [
   ["perfumebottle", "pink"], ["tophat", "gold"], ["lunarsnake", "violet"], ["plushpepe", "green"], ["iongem", "blue"],
   ["lolpop", "pink"], ["durovscap", "gold"], ["swisswatch", "violet"], ["heartlocket", "pink"], ["mightyarm", "gold"],
   ["crystalball", "violet"], ["jellybunny", "blue"], ["preciouspeach", "pink"], ["signetring", "violet"], ["lowrider", "gold"],
   ["bunnymuffin", "pink"], ["electricskull", "blue"], ["genielamp", "violet"],
 ];
-const WIN = 14, STEP = 360, CENTER = 592;
+const WIN = 14, STEP = 384, CENTER = 602;
 const strip = $("#strip");
 const cards = ITEMS.map(([img, sc], i) => {
   const d = document.createElement("div");
   d.className = `card sc-${sc}`;
   d.style.left = i * STEP + "px";
-  d.innerHTML = `<img src="${GIFT(img)}">` + (i === WIN ? `<div class="name">Low Rider · 5 950 <i class="coin"></i></div>` : "");
+  d.innerHTML = `<div class="beam"></div><div class="pool"></div><img src="${GIFT(img)}">` +
+    (i === WIN ? `<div class="name">Low Rider · 5 950 <i class="coin"></i></div><div class="wborder"></div>` : "");
   strip.appendChild(d);
   return d;
 });
-const off0 = 1 * STEP + 168 - CENTER;
-const off1 = WIN * STEP + 168 - CENTER + 18;
+const off0 = 1 * STEP + 186 - CENTER;
+const off1 = WIN * STEP + 186 - CENTER + 16;
 const offAt = (t) => lerp(off0, off1, ease.out5(seg(t, T.spin[0], T.spin[1])));
+
+// --- деления вокруг кольца ---
+{
+  const g = $("#ticks");
+  for (let i = 0; i < 72; i++) {
+    const a = (i * 5 * Math.PI) / 180, r1 = 190, r2 = i % 6 ? 196 : 200;
+    const l = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    l.setAttribute("x1", 202 + r1 * Math.sin(a)); l.setAttribute("y1", 202 - r1 * Math.cos(a));
+    l.setAttribute("x2", 202 + r2 * Math.sin(a)); l.setAttribute("y2", 202 - r2 * Math.cos(a));
+    l.setAttribute("stroke", i % 6 ? "rgba(255,255,255,.14)" : "rgba(255,255,255,.3)"); l.setAttribute("stroke-width", "2");
+    g.appendChild(l);
+  }
+}
+// золотая дуга шанса стоит снизу по центру, как у образца: от (180 − шанс·180)° до (180 + шанс·180)°
+const ARC_START = 180 - CHANCE * 180;
+function needleAt(t) {
+  const stop = 360 * 4 + ARC_START + CHANCE * 360 * 0.62; // четыре оборота и остановка внутри дуги
+  return ease.out5(seg(t, T.run[0], T.run[1])) * stop;
+}
+
+// --- искры ---
+const SPARKS = Array.from({ length: 9 }, () => {
+  const d = document.createElement("div");
+  d.className = "spark";
+  $("#sparks").appendChild(d);
+  return d;
+});
+function sparks(t, a, cx, cy, rx, ry) {
+  const r = rand(7);
+  SPARKS.forEach((el, i) => {
+    const ang = r() * Math.PI * 2, dist = 0.55 + r() * 0.45, d = i * 0.06, sz = r();
+    const k = seg(t, a + d, a + d + 0.75);
+    const s = Math.sin(k * Math.PI);
+    css(el, { left: cx + Math.cos(ang) * rx * dist + "px", top: cy + Math.sin(ang) * ry * dist - k * 20 + "px", opacity: s,
+      transform: `scale(${0.3 + s * (0.7 + sz * 0.6)}) rotate(${k * 120}deg)` });
+  });
+}
 
 // --- звуки ---
 const SFX = [{ t: T.tap1, k: "tap" }];
@@ -237,23 +311,15 @@ const SFX = [{ t: T.tap1, k: "tap" }];
     const idx = Math.floor((offAt(t) + CENTER) / STEP);
     if (idx !== prev) { SFX.push({ t, k: "tick" }); prev = idx; }
   }
-}
-SFX.push({ t: T.win1[0], k: "win" }, { t: T.toB[0], k: "whoosh" }, { t: T.tap2, k: "tap" });
-// стрелка бежит по кольцу: щелчок на каждой восьмой части оборота
-{
-  let prev = 0;
+  SFX.push({ t: T.win1[0], k: "win" }, { t: T.toB[0], k: "whoosh" }, { t: T.tap2, k: "tap" });
+  let p = 0;
   for (let t = T.run[0]; t <= T.run[1]; t += 0.002) {
-    const n = Math.floor(needleAt(t) / 45);
-    if (n !== prev) { SFX.push({ t, k: "tick" }); prev = n; }
+    const n = Math.floor(needleAt(t) / 30);
+    if (n !== p) { SFX.push({ t, k: "tick" }); p = n; }
   }
+  SFX.push({ t: T.win2[0], k: "win2" }, { t: T.toC[0] + 0.05, k: "pop" }, { t: T.toC[0] + 0.5, k: "whoosh" });
 }
-SFX.push({ t: T.win2[0], k: "win2" }, { t: T.toC[0] + 0.05, k: "pop" });
 window.SFX = SFX;
-
-function needleAt(t) {
-  const stop = 360 * 4 + CHANCE * 360 * 0.55; // четыре оборота и остановка внутри золотой дуги
-  return ease.out5(seg(t, T.run[0], T.run[1])) * stop;
-}
 
 function tapAt(t, at, x, y) {
   const k = seg(t, at - 0.12, at + 0.35);
@@ -263,24 +329,19 @@ function tapAt(t, at, x, y) {
     transform: `scale(${grow ? 1 + grow * 0.9 : 1.4 - press * 0.4})` });
   return true;
 }
-
-function sparks(t, a, pts) {
-  ["#sp1", "#sp2", "#sp3", "#sp4"].forEach((id, i) => {
-    const [x, y] = pts[i];
-    const k = seg(t, a + i * 0.08, a + i * 0.08 + 0.7);
-    const s = Math.sin(k * Math.PI);
-    css($(id), { left: x + "px", top: y + "px", opacity: s, transform: `scale(${0.3 + s * 1.1}) rotate(${k * 90}deg)` });
-  });
-}
-
 const pctText = (k) => (k * 100).toFixed(2).replace(".", ",") + " %";
+const polar = (deg, r) => [202 + r * Math.sin((deg * Math.PI) / 180), 202 - r * Math.cos((deg * Math.PI) / 180)];
 
 function render(t) {
   const pin = ease.back(seg(t, 0, 0.45));
-  css($(".panel"), { opacity: seg(t, 0, 0.25), transform: `scale(${0.92 + 0.08 * pin})` });
-  // золотые треугольники-указатели — только в рулетке
+  css($("#panel"), { opacity: seg(t, 0, 0.25), transform: `scale(${0.92 + 0.08 * pin})` });
   const triV = 1 - seg(t, T.toB[0], T.toB[1]);
   css($("#triT"), { opacity: triV }); css($("#triB"), { opacity: triV });
+
+  // золотая рамка вспыхивает на выигрышах
+  const g1 = Math.sin(seg(t, T.win1[0], T.win1[1] + 0.2) * Math.PI);
+  const g2 = Math.sin(seg(t, T.win2[0], T.win2[1] + 0.1) * Math.PI);
+  css($("#goldframe"), { opacity: Math.max(g1, g2) });
 
   // === A: рулетка ===
   const aV = 1 - seg(t, T.toB[0], T.toB[1]);
@@ -288,45 +349,62 @@ function render(t) {
   if (aV > 0) {
     const off = offAt(t);
     const v = Math.abs(offAt(t + 0.016) - off) / 0.016;
-    css(strip, { transform: `translateX(${-off}px)`, filter: `blur(${clamp(v / 700, 0, 12)}px)` });
-    const pop = ease.back(seg(t, T.win1[0], T.win1[0] + 0.4));
+    css(strip, { transform: `translateX(${-off}px)` });
+    $("#mbBlur").setAttribute("stdDeviation", `${clamp(v / 170, 0, 48)} 0`); // размытие только по горизонтали
+    const pop = ease.back(seg(t, T.win1[0], T.win1[0] + 0.45));
     const dim = seg(t, T.win1[0], T.win1[0] + 0.3);
     cards.forEach((c, i) => {
       if (i === WIN) {
-        c.classList.toggle("win", t >= T.win1[0]);
-        css(c, { transform: `scale(${1 + 0.14 * pop})`, zIndex: 2 });
-        css($(".name", c), { opacity: seg(t, T.win1[0] + 0.15, T.win1[0] + 0.4) });
-      } else css(c, { opacity: 1 - 0.55 * dim, filter: `blur(${dim * 2}px)`, transform: "none", zIndex: 1 });
+        // на выигрыше карточку в ленте подменяет герой поверх рамки
+        css(c, { opacity: t >= T.win1[0] ? 0 : 1 });
+      } else css(c, { opacity: 1 - 0.5 * dim, filter: `blur(${dim * 3}px) brightness(${1 - 0.3 * dim})`, transform: "none", zIndex: 1 });
     });
-    css($("#raysA"), { opacity: dim, transform: `rotate(${t * 18}deg) scale(${0.6 + 0.4 * pop})` });
-    // кнопка: нажатие и уход вниз на время прокрутки
+    css($("#raysA"), { left: CENTER + "px", top: "300px", opacity: dim, transform: `rotate(${t * 16}deg) scale(${0.6 + 0.4 * pop})` });
+    // герой: стоит ровно на месте выигрышной карточки и вырастает за края рамки
+    const heroOn = t >= T.win1[0] && t < T.toB[1];
+    const heroX = WIN * STEP - offAt(t) + 14 + 0; // позиция карточки в координатах рамки
+    const out = seg(t, T.toB[0] - 0.05, T.toB[1]);
+    css($("#hero"), { display: heroOn ? "block" : "none", left: heroX + "px", opacity: 1 - out,
+      transform: `scale(${1 + 0.2 * pop - 0.15 * out}) translateY(${-6 * pop}px)` });
+    css($(".name", $("#hero")), { opacity: seg(t, T.win1[0] + 0.15, T.win1[0] + 0.4) });
+    css($("#heroglow"), { display: heroOn ? "block" : "none", left: heroX + 186 + "px", top: "312px", opacity: dim * (1 - out) });
     const bk = seg(t, T.tap1 + 0.05, T.tap1 + 0.35);
-    css($("#spinBtn"), { opacity: 1 - bk, transform: `translateX(-50%) translateY(${bk * 30}px) scale(${t < T.tap1 ? 1 - 0.06 * seg(t, T.tap1 - 0.1, T.tap1) : 1})` });
+    css($("#spinBtn"), { opacity: (1 - bk) * aV, transform: `translateX(-50%) translateY(${bk * 40}px) scale(${t < T.tap1 ? 1 - 0.06 * seg(t, T.tap1 - 0.1, T.tap1) : 1})` });
+  } else {
+    css($("#spinBtn"), { opacity: 0 });
+    css($("#hero"), { display: "none" }); css($("#heroglow"), { display: "none" });
   }
 
   // === B: апгрейд ===
   const bV = seg(t, T.toB[0], T.toB[1]) * (1 - seg(t, T.toC[0], T.toC[1]));
   css($("#sB"), { opacity: bV, display: bV > 0 ? "block" : "none" });
   if (bV > 0) {
-    const inK = ease.out3(seg(t, T.toB[0], T.toB[1] + 0.1));
-    css($("#from"), { transform: `translateX(${(1 - inK) * -40}px)` });
-    css($("#to"), { transform: `translateX(${(1 - inK) * 40}px)` });
+    const inK = ease.out3(seg(t, T.toB[0], T.toB[1] + 0.15));
+    css($("#from"), { transform: `translateX(${(1 - inK) * -60}px)` });
+    css($("#to"), { transform: `translateX(${(1 - inK) * 60}px)` });
+    css($("#gauge"), { transform: `scale(${0.85 + 0.15 * inK})` });
+    // дуга растёт от низа в обе стороны
     const fill = ease.out3(seg(t, T.fill[0], T.fill[1])) * CHANCE;
-    $("#arc").setAttribute("stroke-dasharray", `${fill * 1006} 1006`);
+    const L = 2 * Math.PI * 166;
+    $("#arc").setAttribute("stroke-dasharray", `${fill * L} ${L}`);
+    $("#arc").setAttribute("transform", `rotate(${90 - fill * 180} 202 202)`);
+    const [tx, ty] = polar(180 + fill * 180, 166);
+    $("#tip").setAttribute("cx", tx); $("#tip").setAttribute("cy", ty);
+    css($("#tip"), { opacity: fill > 0.005 ? 1 : 0 });
     $("#pct").textContent = pctText(fill);
-    css($("#needle"), { transform: `rotate(${needleAt(t)}deg)`, opacity: seg(t, T.fill[1] - 0.2, T.fill[1]) });
-    // кнопка «Улучшить»: нажатие
-    css($("#upBtn"), { transform: `scale(${1 - 0.05 * Math.sin(seg(t, T.tap2 - 0.1, T.tap2 + 0.15) * Math.PI)})`,
-      filter: t > T.tap2 && t < T.win2[0] ? "brightness(0.8)" : "none" });
-    // выигрыш: в кольце — подарок и «Улучшено», лучи, карточка цели светится
-    const w = ease.back(seg(t, T.win2[0], T.win2[0] + 0.4));
+    css($("#ptr"), { transform: `rotate(${needleAt(t)}deg)`, opacity: seg(t, T.fill[1] - 0.25, T.fill[1]) });
+    const pressed = t > T.tap2 && t < T.win2[0];
+    css($("#upBtn"), { transform: `scale(${1 - 0.05 * Math.sin(seg(t, T.tap2 - 0.1, T.tap2 + 0.15) * Math.PI)})`, filter: pressed ? "brightness(0.85)" : "none" });
+    // выигрыш
+    const w = ease.back(seg(t, T.win2[0], T.win2[0] + 0.45));
     const wv = seg(t, T.win2[0], T.win2[0] + 0.25);
     css($("#core"), { opacity: 1 - wv });
-    css($("#prize"), { opacity: wv, transform: `scale(${0.5 + 0.5 * w})` });
-    css($("#done"), { opacity: wv, transform: `translateY(${(1 - w) * 10}px)` });
-    css($("#raysB"), { opacity: wv, transform: `rotate(${t * 20}deg) scale(${0.7 + 0.3 * w})` });
-    css($("#to"), { boxShadow: `inset 0 0 0 ${3 * wv}px #ffc93d, 0 0 ${60 * wv}px rgba(255,201,61,${0.5 * wv})` });
-    css($("#from"), { opacity: 1 - 0.55 * wv, filter: `grayscale(${wv})` });
+    css($("#prize"), { opacity: wv, transform: `scale(${0.4 + 0.6 * w})` });
+    css($("#done"), { opacity: wv, transform: `translateY(${(1 - w) * 12}px)` });
+    css($("#raysB"), { opacity: wv, transform: `rotate(${t * 18}deg) scale(${0.6 + 0.4 * w})` });
+    css($("#toB"), { opacity: wv });
+    css($("#to"), { boxShadow: `0 0 ${60 * wv}px rgba(255, 190, 40, ${0.45 * wv})`, zIndex: 2 });
+    css($("#from"), { opacity: 1 - 0.5 * wv, filter: `grayscale(${wv}) brightness(${1 - 0.25 * wv})` });
     css($("#tagX"), { display: t < T.win2[0] + 0.2 ? "inline-block" : "none" });
     css($("#tagInv"), { display: t >= T.win2[0] + 0.2 ? "inline-block" : "none" });
   }
@@ -336,24 +414,25 @@ function render(t) {
   css($("#sC"), { opacity: cV, display: cV > 0 ? "block" : "none" });
   if (cV > 0) {
     const s0 = T.toC[0];
-    const lk = ease.back(seg(t, s0 + 0.1, s0 + 0.55));
-    css($("#logo"), { transform: `scale(${0.6 + 0.4 * lk})`, opacity: seg(t, s0 + 0.1, s0 + 0.3) });
-    rise($("#apai"), t, s0, 0.4, 20);
-    const sw = seg(t, s0 + 0.45, s0 + 0.85);
-    $("#swPath").setAttribute("stroke-dasharray", `${sw * 400} 400`);
+    const lk = ease.back(seg(t, s0 + 0.08, s0 + 0.55));
+    css($("#logo"), { transform: `scale(${0.55 + 0.45 * lk}) rotate(${(1 - lk) * -4}deg)`, opacity: seg(t, s0 + 0.08, s0 + 0.25) });
+    rise($("#apai"), t, s0, 0.4, 24);
+    const sw = ease.out3(seg(t, s0 + 0.45, s0 + 0.85));
+    $("#swPath").setAttribute("stroke-dasharray", `${sw * 430} 430`);
     css($("#swHead"), { opacity: seg(t, s0 + 0.8, s0 + 0.9) });
     const bob = (ph, a = 8) => `translateY(${Math.sin(t * 2.4 + ph) * a}px) rotate(${Math.sin(t * 1.6 + ph) * 5}deg)`;
     css($("#cL"), { transform: bob(0) + ` scale(${ease.back(seg(t, s0 + 0.05, s0 + 0.5))})` });
     css($("#cR"), { transform: bob(2) + ` scale(${ease.back(seg(t, s0 + 0.12, s0 + 0.57))})` });
     css($("#cX"), { opacity: seg(t, s0 + 0.5, s0 + 0.7), transform: `scale(${ease.back(seg(t, s0 + 0.5, s0 + 0.8))})` });
-    css($("#cTL"), { transform: bob(1, 5) + ` scale(${ease.back(seg(t, s0 + 0.2, s0 + 0.6))})`, opacity: 0.85 });
-    css($("#cTR"), { transform: bob(3, 5) + ` scale(${ease.back(seg(t, s0 + 0.25, s0 + 0.65))})`, opacity: 0.85 });
+    css($("#cTL"), { transform: bob(1, 5) + ` scale(${ease.back(seg(t, s0 + 0.2, s0 + 0.6))})` });
+    css($("#cTR"), { transform: bob(3, 5) + ` scale(${ease.back(seg(t, s0 + 0.25, s0 + 0.65))})` });
   }
 
   // нажатия и искры
-  if (!tapAt(t, T.tap1, 616, 470) && !tapAt(t, T.tap2, 616, 486)) css($("#tap"), { opacity: 0 });
-  if (t >= T.win2[0] - 0.05) sparks(t, T.win2[0], [[440, 120], [770, 90], [790, 330], [460, 360]]);
-  else sparks(t, T.win1[0], [[400, 140], [820, 110], [840, 380], [380, 400]]);
+  if (!tapAt(t, T.tap1, 616, 494) && !tapAt(t, T.tap2, 616, 505)) css($("#tap"), { opacity: 0 });
+  if (t >= T.toC[0] + 0.7) sparks(t, T.toC[0] + 0.8, 1010, 392, 60, 40);
+  else if (t >= T.win2[0] - 0.05) sparks(t, T.win2[0], 616, 230, 230, 190);
+  else sparks(t, T.win1[0], 616, 300, 260, 250);
 }
 
 boot(DUR, render);
