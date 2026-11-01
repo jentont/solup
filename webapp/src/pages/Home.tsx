@@ -1,20 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "../api";
 import { useApp } from "../App";
 import { Footer } from "../components/Footer";
 import { GameArt } from "../components/GameArt";
 import { SecTitle } from "../components/ui";
-
-// Баннеры: у каждого свой цвет, как у карточек игр
-type Slide = { hand: string; title: string; text: string; imgs: string[]; tab: string; cta: string; hue: string };
-
-const SLIDES: Slide[] = [
-  { hand: "10 новых игр", title: "Плинко", text: "Брось шарик — до ×27 к ставке", imgs: ["hangingstar", "stellarrocket"], tab: "plinko", cta: "Играть", hue: "plinko" },
-  { hand: "новинка", title: "Колесо", text: "Один спин — до ×8 к ставке", imgs: ["recordplayer", "partysparkler"], tab: "wheel", cta: "Крутить", hue: "wheel" },
-  { hand: "новинка", title: "Башня", text: "8 этажей, до ×6000 на вершине", imgs: ["witchhat", "spyagaric"], tab: "tower", cta: "Играть", hue: "tower" },
-  { hand: "бесплатно", title: "Кейс дня", text: "Открывай раз в сутки — до 500 монет", imgs: ["lootbag", "lolpop"], tab: "bonus", cta: "Открыть", hue: "cases" },
-  { hand: "навсегда", title: "Зови друзей", text: "Процент с каждого их пополнения", imgs: ["preciouspeach", "heartlocket"], tab: "ref", cta: "Позвать", hue: "upgrade" },
-];
 
 // Обложка каждой игры — компонент GameArt: предмет игры и NFT-подарки вокруг
 type Game = { tab: string; title: string; tag?: string };
@@ -38,47 +27,12 @@ const GAMES: Game[] = [
   { tab: "rps", title: "Камень-ножницы", tag: "NEW" },
 ];
 
-function Hero({ go }: { go: (tab: string) => void }) {
-  const [i, setI] = useState(0);
-  const track = useRef<HTMLDivElement>(null);
-  const paused = useRef(false);
-
-  useEffect(() => {
-    const t = setInterval(() => {
-      if (paused.current || !track.current) return;
-      const next = (Math.round(track.current.scrollLeft / track.current.clientWidth) + 1) % SLIDES.length;
-      track.current.scrollTo({ left: next * track.current.clientWidth, behavior: "smooth" });
-    }, 5000);
-    return () => clearInterval(t);
-  }, []);
-
+// Баннер: ролик «рулетка → апгрейд» без звука по кругу; нажатие открывает апгрейд
+function PromoVideo({ go }: { go: (tab: string) => void }) {
   return (
-    <div className="hero">
-      <div
-        className="hero-track"
-        ref={track}
-        onScroll={(e) => setI(Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth))}
-        onTouchStart={() => (paused.current = true)}
-        onTouchEnd={() => setTimeout(() => (paused.current = false), 4000)}
-      >
-        {SLIDES.map((s) => (
-          <div className={`hero-slide hue-${s.hue}`} key={s.title} onClick={() => go(s.tab)}>
-            <span className="rays" />
-            <img className="hero-img back" src={`/gifts/${s.imgs[1]}.webp`} alt="" />
-            <img className="hero-img" src={`/gifts/${s.imgs[0]}.webp`} alt="" />
-            <div className="hero-body">
-              <span className="hero-hand">{s.hand}</span>
-              <div className="hero-title">{s.title}</div>
-              <div className="hero-text">{s.text}</div>
-            </div>
-            <button className="hero-btn">{s.cta}</button>
-          </div>
-        ))}
-      </div>
-      <div className="hero-dots">
-        {SLIDES.map((_, n) => <i key={n} className={n === i ? "on" : ""} />)}
-      </div>
-    </div>
+    <button className="promo-video" onClick={() => go("upgrade")} aria-label="Апгрейд">
+      <video src="/promo/upgrade.mp4" poster="/promo/upgrade.jpg" autoPlay muted loop playsInline preload="auto" />
+    </button>
   );
 }
 
@@ -95,7 +49,7 @@ export function Home({ go }: { go: (tab: string) => void }) {
 
   return (
     <div>
-      <Hero go={go} />
+      <PromoVideo go={go} />
 
       <SecTitle title="Игры" />
       <div className="games">

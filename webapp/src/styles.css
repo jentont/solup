@@ -1129,3 +1129,15 @@ body.dark .tabbar { background: color-mix(in srgb, #1a1d3c 80%, transparent); bo
 .gtile .gtile-img { top: 44%; width: 48%; z-index: 2; }
 .gtile .gtile-img.back { top: 52%; left: 24%; width: 30%; rotate: -14deg; transform: translateX(-50%); z-index: 1; }
 .gtile-floor { top: 74%; }
+
+/* ============ v2: ролик на главной и игры по две в ряд ============ */
+.promo-video { display: block; width: 100%; margin-top: 6px; padding: 0; border-radius: 22px; overflow: hidden; aspect-ratio: 1232 / 624;
+  background: #12152e; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45); }
+.promo-video video { display: block; width: 100%; height: 100%; object-fit: cover; }
+.promo-video:active { transform: scale(0.98); }
+/* на телефоне — две крупные плитки в ряд */
+.games { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.gtile { aspect-ratio: 0.95; border-radius: 22px; }
+.gtile-title { font-size: 19px; left: 14px; bottom: 12px; }
+.online, .gtile-tag { top: 10px; left: 10px; font-size: 11px; padding: 3px 8px; }
+@media (min-width: 720px) { .games { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); } }
