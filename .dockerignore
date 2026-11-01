@@ -1,0 +1,11 @@
+.git
+.venv
+.claude
+**/node_modules
+**/__pycache__
+**/.pytest_cache
+webapp/dist
+backend/.env
+backend/*.db
+backend/*.db-*
+brand

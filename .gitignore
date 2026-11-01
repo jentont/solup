@@ -1,0 +1,11 @@
+.venv/
+node_modules/
+webapp/dist/
+backend/.env
+backend/data.db
+__pycache__/
+.claude/
+*.db
+*.db-*
+.env
+.pytest_cache/

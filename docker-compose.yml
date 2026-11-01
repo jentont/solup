@@ -1,0 +1,16 @@
+# Запуск: заполните backend/.env (см. backend/.env.example), затем `docker compose up -d --build`.
+# База SQLite хранится в томе solup-data и переживает пересборки.
+services:
+  solup:
+    build: .
+    restart: unless-stopped
+    env_file: backend/.env
+    environment:
+      DATABASE_URL: sqlite+aiosqlite:////data/data.db
+    ports:
+      - "8000:8000"
+    volumes:
+      - solup-data:/data
+
+volumes:
+  solup-data:

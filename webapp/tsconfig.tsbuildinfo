@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/api.ts","./src/main.tsx","./src/components/deposit.tsx","./src/components/footer.tsx","./src/components/itemcard.tsx","./src/components/livefeed.tsx","./src/components/wallet.tsx","./src/components/ui.tsx","./src/pages/cases.tsx","./src/pages/crash.tsx","./src/pages/home.tsx","./src/pages/profile.tsx","./src/pages/upgrade.tsx"],"version":"5.6.3"}
