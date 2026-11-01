@@ -1113,3 +1113,19 @@ body.dark .tabbar { background: color-mix(in srgb, #1a1d3c 80%, transparent); bo
 .pcard-theme { margin-left: auto; width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; background: rgba(255, 255, 255, 0.16); color: #fff; }
 .pcard-demo + .pcard-theme { margin-left: 8px; }
 @media (max-width: 380px) { .topup { padding: 0 10px; font-size: 13px; } }
+
+/* Силуэт игры за подарками: белый, полупрозрачный; вырезы — цветом плитки */
+.gtile-scene { position: absolute; z-index: 0; left: 4%; top: 2%; width: 92%; height: 76%; fill: #fff; opacity: 0.32; }
+.gtile-scene .cut { fill: var(--h2); }
+.gtile-scene .glyph { font: 900 22px var(--f-display); fill: #fff; }
+.gtile-scene .glyph.cut { fill: var(--h2); font-size: 16px; }
+.gtile-scene .glyph.big { font-size: 34px; }
+.gtile-scene .glyph.huge { font-size: 27px; letter-spacing: -0.04em; }
+/* подарки ниже и чуть меньше, чтобы силуэт читался */
+.gtile .gtile-img { top: 30%; width: 58%; }
+.gtile .gtile-img.back { top: 40%; left: 72%; width: 34%; }
+.gtile-floor { top: 70%; }
+.gtile-scene { opacity: 0.45; top: 0; height: 72%; }
+.gtile .gtile-img { top: 44%; width: 48%; z-index: 2; }
+.gtile .gtile-img.back { top: 52%; left: 24%; width: 30%; rotate: -14deg; transform: translateX(-50%); z-index: 1; }
+.gtile-floor { top: 74%; }
