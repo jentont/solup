@@ -182,6 +182,39 @@ async def withdrawal_decision(cb: CallbackQuery, bot: Bot) -> None:
     await cb.message.edit_text(f"{cb.message.text}\n\n{note}")
 
 
+ADMIN_KB = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text="📊 Статистика", callback_data="adm:stats"),
+     InlineKeyboardButton(text="📤 Выводы", callback_data="adm:wd")],
+    [InlineKeyboardButton(text="🎁 Склад релеера", callback_data="adm:stock")],
+])
+
+
+@router.message(Command("admin"))
+async def admin_panel(message: Message) -> None:
+    if not is_admin(message.from_user.id):
+        await message.answer(f"Нет доступа. Ваш ID: {message.from_user.id} — добавьте его в ADMIN_IDS, например [{message.from_user.id}].")
+        return
+    await message.answer(
+        "Админ-панель SolUP\n\n"
+        "/stats — статистика\n/withdrawals — заявки на вывод\n/stock — подарки на релеере\n"
+        "/user <id> — игрок\n/addbalance <id> <монеты> — начислить\n/setprice <коллекция> | <цена> — цена подарка",
+        reply_markup=ADMIN_KB)
+
+
+@router.callback_query(F.data.startswith("adm:"))
+async def admin_buttons(cb: CallbackQuery, bot: Bot) -> None:
+    if not is_admin(cb.from_user.id):
+        return
+    await cb.answer()
+    action = cb.data.split(":")[1]
+    if action == "stats":
+        await stats(cb.message.model_copy(update={"from_user": cb.from_user}))
+    elif action == "wd":
+        await list_withdrawals(cb.message.model_copy(update={"from_user": cb.from_user}), bot)
+    elif action == "stock":
+        await stock(cb.message.model_copy(update={"from_user": cb.from_user}), bot)
+
+
 @router.message(Command("stats"))
 async def stats(message: Message) -> None:
     if not is_admin(message.from_user.id):

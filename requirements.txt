@@ -1,0 +1,11 @@
+aiogram>=3.22
+fastapi>=0.115
+uvicorn[standard]>=0.32
+sqlalchemy[asyncio]>=2.0.36
+aiosqlite
+asyncpg
+pydantic-settings>=2.6
+aiohttp
+pytest
+pytest-asyncio
+httpx

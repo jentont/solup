@@ -1,6 +1,5 @@
 .venv/
 node_modules/
-webapp/dist/
 backend/.env
 backend/data.db
 __pycache__/
