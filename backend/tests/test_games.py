@@ -337,3 +337,18 @@ def test_blackjack_values():
     from app.arcade import bj_value
 
     assert bj_value([1, 13]) == 21 and bj_value([1, 1, 9]) == 21 and bj_value([10, 12, 5]) == 25 and bj_value([1, 5, 10]) == 16
+
+
+def test_role_emoji_fallback():
+    """Значок роли: заданный админом, иначе первый кандидат из пака, иначе обычный символ."""
+    from app import branding
+
+    branding._ids.clear()
+    branding._roles.clear()
+    assert branding.role_emoji("coin") == ("🪙", None)
+    branding._ids["💰"] = "111"  # монеты 🪙 в паке нет — берётся 💰
+    assert branding.role_html("coin") == '<tg-emoji emoji-id="111">💰</tg-emoji>'
+    branding._roles["coin"] = ("🪙", "222")  # задано через /setemoji
+    assert branding.role_emoji("coin") == ("🪙", "222")
+    branding._ids.clear()
+    branding._roles.clear()

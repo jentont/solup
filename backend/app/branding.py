@@ -44,7 +44,7 @@ async def load_emoji(bot: Bot) -> None:
         if s.emoji and s.custom_emoji_id:
             _ids.setdefault(s.emoji, s.custom_emoji_id)
             _ids.setdefault(s.emoji.replace("️", ""), s.custom_emoji_id)
-    log.info("пак эмодзи %s: %d значков", pack, len(_ids))
+    log.info("пак эмодзи %s: %d значков: %s", pack, len(_ids), "".join(sorted({s.emoji for s in st.stickers if s.emoji})))
 
 
 def pe(ch: str) -> str:
@@ -56,6 +56,45 @@ def pe(ch: str) -> str:
 def emoji_id(ch: str) -> str | None:
     """custom_emoji_id для иконки в кнопке (или None, если такого эмодзи нет в паке)."""
     return _ids.get(ch) or _ids.get(ch.replace("️", ""))
+
+
+# Роли — эмодзи для кнопки «Играть» и монеты. Админ задаёт точный премиум-эмодзи командой /setemoji,
+# иначе берётся первый из кандидатов, который есть в паке, иначе обычный символ.
+ROLES = {
+    "play": ["🎮", "🕹", "🎰", "🎲", "▶️", "🚀", "⚡"],
+    "coin": ["🪙", "💰", "💵", "💎", "⭐"],
+}
+_roles: dict[str, tuple[str, str]] = {}  # роль → (символ, custom_emoji_id)
+
+
+async def load_roles() -> None:
+    from .gifts import kv_get
+
+    for role in ROLES:
+        if (v := await kv_get(f"emoji_{role}")) and "|" in v:
+            ch, eid = v.split("|", 1)
+            _roles[role] = (ch, eid)
+
+
+async def set_role(role: str, ch: str, eid: str) -> None:
+    from .gifts import kv_set
+
+    _roles[role] = (ch, eid)
+    await kv_set(f"emoji_{role}", f"{ch}|{eid}")
+
+
+def role_emoji(role: str) -> tuple[str, str | None]:
+    if role in _roles:
+        return _roles[role]
+    for ch in ROLES[role]:
+        if eid := emoji_id(ch):
+            return ch, eid
+    return ROLES[role][0], None
+
+
+def role_html(role: str) -> str:
+    ch, eid = role_emoji(role)
+    return f'<tg-emoji emoji-id="{eid}">{ch}</tg-emoji>' if eid else ch
 
 
 def esc(text: str) -> str:

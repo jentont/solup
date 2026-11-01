@@ -14,7 +14,7 @@ from pathlib import Path
 from aiogram.types import FSInputFile
 
 from . import gifts
-from .branding import emoji_id, esc, pe
+from .branding import ROLES, emoji_id, esc, pe, role_emoji, role_html, set_role
 from .config import get_settings
 from .db import Session
 from .models import Deposit, InventoryItem, Item, Transaction, User, Withdrawal
@@ -26,8 +26,17 @@ router = Router()
 MIN_STARS, MAX_STARS = 1, 100_000
 
 
+def fmt_num(amount: int) -> str:
+    return f"{amount / 100:,.2f}".replace(",", " ").rstrip("0").rstrip(".")
+
+
 def fmt(amount: int) -> str:
-    return f"{amount / 100:,.2f}".replace(",", " ").rstrip("0").rstrip(".") + " 🪙"
+    return fmt_num(amount) + " 🪙"
+
+
+def fmt_html(amount: int) -> str:
+    """Сумма с монетой из премиум-пака — для сообщений с parse_mode=HTML."""
+    return f"{fmt_num(amount)} {role_html('coin')}"
 
 
 def is_admin(user_id: int) -> bool:
@@ -38,7 +47,9 @@ def play_keyboard() -> InlineKeyboardMarkup | None:
     url = get_settings().webapp_url
     if not url:
         return None
-    return InlineKeyboardMarkup(inline_keyboard=[[btn("🎮", "Играть", style="success", web_app=WebAppInfo(url=url))]])
+    ch, icon = role_emoji("play")
+    return InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(
+        text="Играть" if icon else f"{ch} Играть", icon_custom_emoji_id=icon, style="success", web_app=WebAppInfo(url=url))]])
 
 
 def btn(emoji: str, text: str, style: str | None = "primary", **kw) -> InlineKeyboardButton:
@@ -81,7 +92,7 @@ async def start(message: Message, command: CommandObject) -> None:
         f"{pe('🎮')} Апгрейд, краш, мины, башня, колесо\n"
         f"{pe('💎')} +{get_settings().stars_bonus_percent:g}% к пополнению\n"
         f"{pe('🚀')} Вывод — настоящими подарками в Telegram</blockquote>\n\n"
-        f"{pe('💰')} Баланс: <b>{fmt(user.balance)}</b>"
+        f"{pe('💰')} Баланс: <b>{fmt_html(user.balance)}</b>"
     )
     global _start_anim
     try:
@@ -97,7 +108,8 @@ async def start(message: Message, command: CommandObject) -> None:
 async def balance_cmd(message: Message) -> None:
     async with Session() as s:
         user = await s.get(User, message.from_user.id)
-    await message.answer(f"Баланс: {fmt(user.balance if user else 0)}", reply_markup=play_keyboard())
+    await message.answer(f"{pe('💰')} Баланс: <b>{fmt_html(user.balance if user else 0)}</b>", parse_mode="HTML",
+                         reply_markup=play_keyboard())
 
 
 # --- Telegram Stars ---
@@ -124,8 +136,8 @@ async def successful_payment(message: Message) -> None:
         bonus = await add_deposit_coins(s, message.from_user.id, amount, "deposit_stars", p.telegram_payment_charge_id,
                                         get_settings().stars_bonus_percent)
         await s.commit()
-    extra = f" + бонус {fmt(bonus)}" if bonus else ""
-    await message.answer(f"✅ Зачислено {fmt(amount)}{extra}", reply_markup=play_keyboard())
+    extra = f" + бонус {fmt_html(bonus)}" if bonus else ""
+    await message.answer(f"✅ Зачислено {fmt_html(amount)}{extra}", parse_mode="HTML", reply_markup=play_keyboard())
 
 
 # --- Подарки через Business-релеер ---
@@ -214,7 +226,8 @@ async def admin_panel(message: Message) -> None:
     await message.answer(
         "Админ-панель SolUP\n\n"
         "/stats — статистика\n/withdrawals — заявки на вывод\n/stock — подарки на релеере\n"
-        "/user <id> — игрок\n/addbalance <id> <монеты> — начислить\n/setprice <коллекция> | <цена> — цена подарка",
+        "/user <id> — игрок\n/addbalance <id> <монеты> — начислить\n/setprice <коллекция> | <цена> — цена подарка\n"
+        "/setemoji play|coin <премиум-эмодзи> — значок кнопки «Играть» или монеты",
         reply_markup=admin_kb())
 
 
@@ -298,6 +311,22 @@ async def set_price(message: Message, command: CommandObject) -> None:
             s.add(Item(name=name, gift_name=name, value=value))
         await s.commit()
     await message.answer(f"Цена «{name}»: {fmt(value)}\n⚠️ RTP кейсов с этим предметом изменился.")
+
+
+@router.message(Command("setemoji"))
+async def set_emoji(message: Message, command: CommandObject) -> None:
+    """/setemoji play 🎮 — премиум-эмодзи из сообщения становится значком кнопки «Играть» (или coin — монеты)."""
+    if not is_admin(message.from_user.id):
+        return
+    role = (command.args or "").split(maxsplit=1)[0] if command.args else ""
+    custom = next((e for e in message.entities or [] if e.type == "custom_emoji"), None)
+    if role not in ROLES or not custom:
+        await message.answer("Формат: /setemoji play <премиум-эмодзи> или /setemoji coin <премиум-эмодзи>\n"
+                             "Эмодзи должен быть премиум (из пака), обычный не подойдёт.")
+        return
+    await set_role(role, custom.extract_from(message.text), custom.custom_emoji_id)
+    what = "кнопки «Играть»" if role == "play" else "монеты"
+    await message.answer(f"Готово, значок {what}: {role_html(role)}", parse_mode="HTML", reply_markup=play_keyboard())
 
 
 @router.message(Command("withdrawals"))
