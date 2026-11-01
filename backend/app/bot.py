@@ -38,7 +38,7 @@ def play_keyboard() -> InlineKeyboardMarkup | None:
     url = get_settings().webapp_url
     if not url:
         return None
-    return InlineKeyboardMarkup(inline_keyboard=[[btn("🎮", "Играть", web_app=WebAppInfo(url=url))]])
+    return InlineKeyboardMarkup(inline_keyboard=[[btn("🎮", "Играть", style="success", web_app=WebAppInfo(url=url))]])
 
 
 def btn(emoji: str, text: str, style: str | None = "primary", **kw) -> InlineKeyboardButton:
@@ -75,11 +75,12 @@ async def start(message: Message, command: CommandObject) -> None:
         user = await get_or_create_user(s, u.id, u.username, u.first_name or "", referrer_id=ref)
         await s.commit()
     caption = (
-        f"{pe('👋')} Привет, <b>{esc(u.first_name)}</b>!\n\n"
-        f"{pe('📦')} Открывай кейсы с подарками\n"
-        f"{pe('⚡')} Делай апгрейды\n"
-        f"{pe('🚀')} Играй в краш\n"
-        f"{pe('🎁')} Выводи подарки себе в Telegram\n\n"
+        f"{pe('👋')} Привет, <b>{esc(u.first_name)}</b>! <b>SolUP</b> — кейсы и мини-игры с NFT-подарками Telegram.\n\n"
+        f"<blockquote>{pe('🎁')} Бесплатный кейс каждый день\n"
+        f"{pe('📦')} 14 кейсов со всеми NFT-подарками\n"
+        f"{pe('🎮')} Апгрейд, краш, мины, башня, колесо\n"
+        f"{pe('💎')} +{get_settings().stars_bonus_percent:g}% к пополнению\n"
+        f"{pe('🚀')} Вывод — настоящими подарками в Telegram</blockquote>\n\n"
         f"{pe('💰')} Баланс: <b>{fmt(user.balance)}</b>"
     )
     global _start_anim

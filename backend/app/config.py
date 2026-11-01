@@ -29,8 +29,6 @@ class Settings(BaseSettings):
     referral_percent: float = 5.0
     stars_bonus_percent: float = 10.0  # бонус сверху к пополнению Stars
     crypto_bonus_percent: float = 10.0  # бонус сверху к пополнению TON/USDT
-    daily_bonus_min: int = 1
-    daily_bonus_max: int = 25
     house_edge: float = 0.05  # для апгрейда и краша
     upgrade_max_chance: float = 0.75
 

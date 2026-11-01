@@ -1,6 +1,5 @@
 """Кейсы, апгрейд, продажа предметов, ежедневный бонус."""
 
-import random
 from datetime import timedelta
 
 from sqlalchemy import select, update
@@ -100,8 +99,12 @@ async def sell_items(s: AsyncSession, user_id: int, inventory_ids: list[int], de
 BONUS_PERIOD = timedelta(hours=24)
 
 
-async def claim_daily_bonus(s: AsyncSession, user_id: int) -> int:
-    st = get_settings()
+# Ежедневный бесплатный кейс: призы в монетах и их веса. Ожидание ≈ 10 монет в день.
+DAILY_PRIZES: list[tuple[int, int]] = [(1, 300), (3, 250), (5, 200), (10, 120), (25, 80), (50, 35), (100, 12), (500, 3)]
+
+
+async def claim_daily_case(s: AsyncSession, user_id: int) -> dict:
+    """Открывает бесплатный кейс раз в сутки: приз выбирается честным броском игрока."""
     now = utcnow()
     res = await s.execute(
         update(User)
@@ -109,10 +112,12 @@ async def claim_daily_bonus(s: AsyncSession, user_id: int) -> int:
         .values(last_bonus_at=now)
     )
     if res.rowcount != 1:
-        raise GameError("Бонус уже получен, приходите позже")
-    amount = coins(random.randint(st.daily_bonus_min, st.daily_bonus_max))
+        raise GameError("Кейс уже открыт, приходите позже")
+    r, proof = await next_roll(s, user_id)
+    index = fair.pick_weighted(r, [w for _, w in DAILY_PRIZES])
+    amount = coins(DAILY_PRIZES[index][0])
     await credit(s, user_id, amount, "bonus")
-    return amount
+    return {"amount": amount, "index": index, "proof": proof}
 
 
 async def rotate_seed(s: AsyncSession, user_id: int, client_seed: str | None) -> dict:

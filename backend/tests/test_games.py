@@ -123,14 +123,15 @@ async def test_fair_rotation_reveals_seed():
     assert fair.roll(revealed["server_seed"], revealed["client_seed"], res["proof"]["nonce"]) == res["roll"]
 
 
-async def test_daily_bonus_once():
+async def test_daily_case_once():
     uid = await new_user()
     async with Session() as s:
-        amount = await games.claim_daily_bonus(s, uid)
+        r = await games.claim_daily_case(s, uid)
         await s.commit()
-        assert amount > 0
+        assert r["amount"] == coins(games.DAILY_PRIZES[r["index"]][0])
+        assert await balance(s, uid) == r["amount"]
         with pytest.raises(games.GameError):
-            await games.claim_daily_bonus(s, uid)
+            await games.claim_daily_case(s, uid)
 
 
 def test_init_data_validation():
@@ -199,3 +200,140 @@ async def test_demo_mode_is_separate():
         await refill_demo(s, uid)
         await s.commit()
         assert await balance(s, uid, demo=True) == DEMO_START
+
+
+async def test_mines_flow():
+    from app import mines
+
+    uid = await new_user(100)
+    async with Session() as s:
+        g = await mines.start(s, uid, coins(10), 3, demo=False)
+        await s.commit()
+        board = [int(x) for x in g.board.split(",")]
+        assert len(set(board)) == 3
+        safe = [c for c in range(25) if c not in board]
+        await mines.open_cell(s, uid, safe[0], False)
+        await mines.open_cell(s, uid, safe[1], False)
+        g = await mines.cashout(s, uid, False)
+        await s.commit()
+        assert g.status == "cashed" and g.payout > coins(10)
+        assert await balance(s, uid) == coins(90) + g.payout
+        # проигрыш: открыли мину — ставка сгорела
+        g2 = await mines.start(s, uid, coins(10), 24, demo=False)
+        await s.commit()
+        mine = int(g2.board.split(",")[0])
+        g2 = await mines.open_cell(s, uid, mine, False)
+        await s.commit()
+        assert g2.status == "lost"
+
+
+async def test_tower_flow():
+    from app import tower
+
+    uid = await new_user(100)
+    async with Session() as s:
+        g = await tower.start(s, uid, coins(10), "medium", demo=False)
+        await s.commit()
+        board = [[int(x) for x in f.split(",")] for f in g.board.split(";")]
+        assert len(board) == tower.FLOORS and all(len(f) == 1 for f in board)
+        for floor in range(2):
+            await tower.pick(s, uid, next(c for c in range(3) if c not in board[floor]), False)
+        g = await tower.cashout(s, uid, False)
+        await s.commit()
+        assert g.status == "cashed" and g.payout == int(coins(10) * 0.95 * 1.5 ** 2)
+        assert await balance(s, uid) == coins(90) + g.payout
+        # проигрыш: выбрали бомбу на первом этаже
+        g2 = await tower.start(s, uid, coins(10), "hard", demo=False)
+        await s.commit()
+        g2 = await tower.pick(s, uid, int(g2.board.split(";")[0]), False)
+        await s.commit()
+        assert g2.status == "lost" and tower.state(g2)["multiplier"] == 0.95
+
+
+def test_wheel_rtp():
+    from app import wheel
+
+    for segments in wheel.WHEELS.values():
+        assert len(segments) == 20 and abs(sum(segments) / 20 - 0.95) < 1e-9
+
+
+async def test_wheel_spin():
+    from app import wheel
+
+    uid = await new_user(100)
+    async with Session() as s:
+        r = await wheel.spin(s, uid, coins(10), "low", demo=False)
+        await s.commit()
+        assert r["multiplier"] == wheel.WHEELS["low"][r["index"]]
+        assert await balance(s, uid) == coins(90) + r["payout"]
+
+
+def test_arcade_rtp():
+    """Средний возврат каждой мгновенной игры — около 95% (рулетка 97,3%)."""
+    import random as rnd
+
+    from app import arcade
+
+    rng = rnd.Random(7)
+    params = {"dice": {"target": 50, "over": True}, "limbo": {"target": 3}, "coinflip": {"side": "heads"},
+              "roulette": {"bet": "red"}, "plinko": {"risk": "high"}, "keno": {"picks": [1, 2, 3, 4, 5]},
+              "slots": {}, "rps": {"move": "rock"}}
+    for game, (fn, n) in arcade.INSTANT.items():
+        runs = 200_000
+        total = sum(fn([rng.random() for _ in range(n)], params[game])[0] for _ in range(runs)) / runs
+        expected = 36 / 37 if game == "roulette" else 0.95
+        assert abs(total - expected) < 0.03, (game, total)
+
+
+def test_tables_exact_rtp():
+    from math import comb
+
+    from app import arcade
+
+    probs = [comb(8, k) / 256 for k in range(9)]
+    for risk, mults in arcade.PLINKO.items():
+        assert 0.93 < sum(p * m for p, m in zip(probs, mults)) < 0.96, risk
+    n, d = arcade.KENO_CELLS, arcade.KENO_DRAW
+    for k, mults in arcade.KENO.items():
+        ev = sum(comb(k, h) * comb(n - k, d - h) / comb(n, d) * m for h, m in enumerate(mults))
+        assert 0.93 < ev < 0.96, k
+
+
+async def test_arcade_play_and_rounds():
+    from app import arcade
+
+    uid = await new_user(1000)
+    async with Session() as s:
+        r = await arcade.play(s, uid, "coinflip", coins(10), {"side": "tails"}, demo=False)
+        await s.commit()
+        assert await balance(s, uid) == coins(990) + r["payout"]
+        with pytest.raises(arcade.ArcadeError):
+            await arcade.play(s, uid, "dice", coins(10), {"target": 99}, demo=False)
+        assert await balance(s, uid) == coins(990) + r["payout"]  # неверные параметры — ставка не списана
+
+        # Hi-Lo: идём по разложенной колоде и всегда угадываем, потом забираем
+        g = await arcade.round_action(s, uid, "hilo", "start", coins(10), False)
+        await s.commit()
+        row = await arcade._active(s, uid, "hilo", False)
+        deck = json.loads(row.state)["deck"]
+        cur = deck[0]
+        guess = "hi" if deck[1] >= cur else "lo"
+        g = await arcade.round_action(s, uid, "hilo", guess, 0, False)
+        assert g["status"] == "active" and g["steps"] == 1
+        g = await arcade.round_action(s, uid, "hilo", "cashout", 0, False)
+        await s.commit()
+        assert g["status"] == "cashed" and g["payout"] == int(coins(10) * 0.95 / arcade.hilo_chance(cur, guess))
+
+        # Блэкджек: доводим раздачу до конца, выплата из допустимых
+        g = await arcade.round_action(s, uid, "blackjack", "start", coins(10), False)
+        if g["status"] == "active":
+            g = await arcade.round_action(s, uid, "blackjack", "stand", 0, False)
+        await s.commit()
+        assert g["status"] != "active" and g["payout"] in (0, coins(10), coins(20), coins(22))
+        assert len(g["dealer"]) >= 2
+
+
+def test_blackjack_values():
+    from app.arcade import bj_value
+
+    assert bj_value([1, 13]) == 21 and bj_value([1, 1, 9]) == 21 and bj_value([10, 12, 5]) == 25 and bj_value([1, 5, 10]) == 16

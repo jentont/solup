@@ -170,3 +170,51 @@ class KV(Base):
 
     key: Mapped[str] = mapped_column(String(64), primary_key=True)
     value: Mapped[str] = mapped_column(Text)
+
+
+class MinesGame(Base):
+    __tablename__ = "mines_games"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id"), index=True)
+    bet: Mapped[int] = mapped_column(BigInteger)
+    mines: Mapped[int] = mapped_column(Integer)
+    board: Mapped[str] = mapped_column(String(128))  # клетки с минами через запятую
+    opened: Mapped[str] = mapped_column(String(128), default="")
+    nonce: Mapped[int] = mapped_column(Integer)
+    status: Mapped[str] = mapped_column(String(16), default="active", index=True)  # active | cashed | lost
+    payout: Mapped[int] = mapped_column(BigInteger, default=0)
+    demo: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+
+class TowerGame(Base):
+    __tablename__ = "tower_games"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id"), index=True)
+    bet: Mapped[int] = mapped_column(BigInteger)
+    difficulty: Mapped[str] = mapped_column(String(16))
+    board: Mapped[str] = mapped_column(String(128))  # бомбы по этажам: «0;2,1;…»
+    picks: Mapped[str] = mapped_column(String(64), default="")  # выбранная ячейка на каждом пройденном этаже
+    nonce: Mapped[int] = mapped_column(Integer)
+    status: Mapped[str] = mapped_column(String(16), default="active", index=True)  # active | cashed | lost
+    payout: Mapped[int] = mapped_column(BigInteger, default=0)
+    demo: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+
+class RoundGame(Base):
+    """Пошаговые мини-игры (Hi-Lo, блэкджек): колода и ход игры — в state (JSON)."""
+    __tablename__ = "round_games"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id"), index=True)
+    game: Mapped[str] = mapped_column(String(16), index=True)
+    bet: Mapped[int] = mapped_column(BigInteger)
+    state: Mapped[str] = mapped_column(Text)
+    nonce: Mapped[int] = mapped_column(Integer)
+    status: Mapped[str] = mapped_column(String(16), default="active", index=True)  # active | cashed | lost
+    payout: Mapped[int] = mapped_column(BigInteger, default=0)
+    demo: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)

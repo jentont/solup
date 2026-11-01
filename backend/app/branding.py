@@ -10,6 +10,7 @@ import html
 import logging
 
 from aiogram import Bot
+from aiogram.types import MenuButtonWebApp, WebAppInfo
 
 from .config import get_settings
 
@@ -19,15 +20,15 @@ _ids: dict[str, str] = {}
 
 DESCRIPTION = (
     "🎁 SolUP — подарки Telegram, которые могут больше.\n\n"
-    "📦 Кейсы с NFT-подарками\n"
-    "⚡ Апгрейд: меняй дешёвый подарок на дорогой\n"
-    "🚀 Краш: успей забрать множитель\n"
+    "📦 14 кейсов со всеми NFT-подарками\n"
+    "🎮 Апгрейд, краш, мины, башня, колесо\n"
+    "🎁 Бесплатный кейс каждый день\n"
     "🎮 Демо-режим — играй без риска\n"
     "💎 Пополнение: Stars, TON, USDT и подарки\n"
     "🎁 Вывод — настоящими подарками в Telegram\n\n"
     "Жми «Начать» 👇"
 )
-SHORT_DESCRIPTION = "Кейсы, апгрейд и краш с подарками Telegram. Вывод — настоящими подарками. Есть демо без риска."
+SHORT_DESCRIPTION = "Кейсы и мини-игры с NFT-подарками Telegram. Вывод — настоящими подарками. Есть демо без риска."
 
 
 async def load_emoji(bot: Bot) -> None:
@@ -62,9 +63,11 @@ def esc(text: str) -> str:
 
 
 async def set_profile(bot: Bot) -> None:
-    """Описание бота (видно до «Начать») и короткое описание (в профиле)."""
+    """Описание бота (видно до «Начать»), короткое описание (в профиле) и кнопка «Играть» у поля ввода."""
     try:
         await bot.set_my_description(DESCRIPTION)
         await bot.set_my_short_description(SHORT_DESCRIPTION)
+        if url := get_settings().webapp_url:
+            await bot.set_chat_menu_button(menu_button=MenuButtonWebApp(text="Играть", web_app=WebAppInfo(url=url)))
     except Exception:
         log.warning("не удалось обновить описание бота", exc_info=True)

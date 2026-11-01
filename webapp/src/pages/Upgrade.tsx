@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { api, fmt, haptic, InvItem, Item } from "../api";
 import { useApp } from "../App";
-import { SecTitle } from "../components/ui";
+import { GameHead, SecTitle } from "../components/ui";
 import { ItemCard } from "../components/ItemCard";
 
 export function Upgrade() {
-  const { me, setBalance, toast } = useApp();
+  const { me, setBalance, toast, go } = useApp();
   const [inv, setInv] = useState<InvItem[]>([]);
   const [items, setItems] = useState<Item[]>([]);
   const [picked, setPicked] = useState<number[]>([]);
@@ -70,8 +70,8 @@ export function Upgrade() {
 
   const deg = chance * 360;
   return (
-    <div>
-      <SecTitle hand="рискнём?" title="Апгрейд." />
+    <div className="game-page">
+      <GameHead hand="рискнём?" title="Апгрейд" onBack={() => go("home")} />
       <div className={`upgrade-stage ${result ?? ""}`}>
         <div className="gauge">
           <div className="gauge-ring" style={{ background: `conic-gradient(var(--brand) 0deg ${deg}deg, var(--card-2) ${deg}deg 360deg)` }} />

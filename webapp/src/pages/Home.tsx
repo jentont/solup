@@ -2,23 +2,40 @@ import { useEffect, useRef, useState } from "react";
 import { api } from "../api";
 import { useApp } from "../App";
 import { Footer } from "../components/Footer";
+import { GameArt } from "../components/GameArt";
 import { SecTitle } from "../components/ui";
 
-type Slide = { hand: string; title: string; text: string; img: string; tab: string; cta: string };
+// Баннеры: у каждого свой цвет, как у карточек игр
+type Slide = { hand: string; title: string; text: string; imgs: string[]; tab: string; cta: string; hue: string };
 
 const SLIDES: Slide[] = [
-  { hand: "бесплатно", title: "Подарок дня.", text: "Заходи раз в сутки и забирай монеты", img: "homemadecake", tab: "bonus", cta: "Забрать" },
-  { hand: "рискнёшь?", title: "Апгрейд до ×20.", text: "Меняй дешёвые подарки на дорогие", img: "swisswatch", tab: "upgrade", cta: "Играть" },
-  { hand: "навсегда", title: "Зови друзей.", text: "Процент с каждого их пополнения", img: "preciouspeach", tab: "ref", cta: "Позвать" },
+  { hand: "10 новых игр", title: "Плинко", text: "Брось шарик — до ×27 к ставке", imgs: ["hangingstar", "stellarrocket"], tab: "plinko", cta: "Играть", hue: "plinko" },
+  { hand: "новинка", title: "Колесо", text: "Один спин — до ×8 к ставке", imgs: ["recordplayer", "partysparkler"], tab: "wheel", cta: "Крутить", hue: "wheel" },
+  { hand: "новинка", title: "Башня", text: "8 этажей, до ×6000 на вершине", imgs: ["witchhat", "spyagaric"], tab: "tower", cta: "Играть", hue: "tower" },
+  { hand: "бесплатно", title: "Кейс дня", text: "Открывай раз в сутки — до 500 монет", imgs: ["lootbag", "lolpop"], tab: "bonus", cta: "Открыть", hue: "cases" },
+  { hand: "навсегда", title: "Зови друзей", text: "Процент с каждого их пополнения", imgs: ["preciouspeach", "heartlocket"], tab: "ref", cta: "Позвать", hue: "upgrade" },
 ];
 
-type Game = { tab: string; key?: string; title: string; hint: string; imgs: string[] };
+// Обложка каждой игры — компонент GameArt: предмет игры и NFT-подарки вокруг
+type Game = { tab: string; title: string; tag?: string };
 
 const GAMES: Game[] = [
-  { tab: "upgrade", key: "upgrade", title: "Апгрейд", hint: "дешёвое в дорогое", imgs: ["swisswatch", "diamondring"] },
-  { tab: "crash", key: "crash", title: "Краш", hint: "успей забрать", imgs: ["durovscap", "jellybunny"] },
-  { tab: "cases", key: "cases", title: "Кейсы", hint: "5 кейсов с подарками", imgs: ["lootbag", "plushpepe"] },
-  { tab: "profile", title: "Инвентарь", hint: "продать или вывести", imgs: ["toybear", "heartlocket"] },
+  { tab: "crash", title: "Краш" },
+  { tab: "cases", title: "Кейсы" },
+  { tab: "upgrade", title: "Апгрейд" },
+  { tab: "slots", title: "Слоты", tag: "NEW" },
+  { tab: "mines", title: "Мины" },
+  { tab: "wheel", title: "Колесо", tag: "NEW" },
+  { tab: "tower", title: "Башня", tag: "NEW" },
+  { tab: "blackjack", title: "Блэкджек", tag: "NEW" },
+  { tab: "plinko", title: "Плинко", tag: "NEW" },
+  { tab: "roulette", title: "Рулетка", tag: "NEW" },
+  { tab: "dice", title: "Дайс", tag: "NEW" },
+  { tab: "limbo", title: "Лимбо", tag: "NEW" },
+  { tab: "hilo", title: "Hi-Lo", tag: "NEW" },
+  { tab: "keno", title: "Кено", tag: "NEW" },
+  { tab: "coinflip", title: "Монетка", tag: "NEW" },
+  { tab: "rps", title: "Камень-ножницы", tag: "NEW" },
 ];
 
 function Hero({ go }: { go: (tab: string) => void }) {
@@ -45,14 +62,16 @@ function Hero({ go }: { go: (tab: string) => void }) {
         onTouchEnd={() => setTimeout(() => (paused.current = false), 4000)}
       >
         {SLIDES.map((s) => (
-          <div className="hero-slide" key={s.title}>
+          <div className={`hero-slide hue-${s.hue}`} key={s.title} onClick={() => go(s.tab)}>
+            <span className="rays" />
+            <img className="hero-img back" src={`/gifts/${s.imgs[1]}.webp`} alt="" />
+            <img className="hero-img" src={`/gifts/${s.imgs[0]}.webp`} alt="" />
             <div className="hero-body">
               <span className="hero-hand">{s.hand}</span>
               <div className="hero-title">{s.title}</div>
               <div className="hero-text">{s.text}</div>
-              <button className="hero-btn" onClick={() => go(s.tab)}>{s.cta}</button>
             </div>
-            <img className="hero-img" src={`/gifts/${s.img}.webp`} alt="" />
+            <button className="hero-btn">{s.cta}</button>
           </div>
         ))}
       </div>
@@ -78,40 +97,46 @@ export function Home({ go }: { go: (tab: string) => void }) {
     <div>
       <Hero go={go} />
 
-      <SecTitle hand="сыграем?" title="Игры." />
+      <SecTitle title="Игры" />
       <div className="games">
         {GAMES.map((g) => (
-          <button key={g.tab} className="card game" onClick={() => go(g.tab)}>
-            <div className="game-art">
-              {g.key && (online[g.key] ?? 0) > 0 && (
-                <span className="online"><i />{online[g.key] ?? 0} играют</span>
-              )}
-              <img className="game-img back" src={`/gifts/${g.imgs[1]}.webp`} alt="" />
-              <img className="game-img front" src={`/gifts/${g.imgs[0]}.webp`} alt="" />
-            </div>
-            <div className="game-title">{g.title}</div>
-            <div className="hint">{g.hint}</div>
+          <button key={g.tab} className={`gtile hue-${g.tab}`} onClick={() => go(g.tab)}>
+            <span className="rays" />
+            <span className="gtile-floor" />
+            <GameArt id={g.tab} />
+            {(online[g.tab] ?? 0) > 0 ? (
+              <span className="online"><i />{online[g.tab]} играют</span>
+            ) : g.tag ? <span className="gtile-tag">{g.tag}</span> : null}
+            <span className="gtile-title">{g.title}</span>
           </button>
         ))}
       </div>
 
-      <SecTitle hand="бесплатно" title="Бонусы." />
+      <SecTitle title="Бонусы" />
       <div className="list">
         <button className="card row-card" onClick={() => go("bonus")}>
-          <img src="/gifts/lolpop.webp" alt="" />
+          <span className="row-art hue-cases"><img src="/gifts/lootbag.webp" alt="" /></span>
           <div className="row-card-body">
-            <b>Подарок дня</b>
-            <span className="hint">монеты раз в 24 часа</span>
+            <b>Ежедневный кейс</b>
+            <span className="hint">бесплатно раз в 24 часа</span>
           </div>
-          <span className="pill">Забрать</span>
+          <span className="pill">Открыть</span>
         </button>
         <button className="card row-card" onClick={() => go("ref")}>
-          <img src="/gifts/preciouspeach.webp" alt="" />
+          <span className="row-art hue-upgrade"><img src="/gifts/preciouspeach.webp" alt="" /></span>
           <div className="row-card-body">
             <b>Приглашай друзей</b>
             <span className="hint">{me?.referral_percent ?? 5}% с каждого их пополнения</span>
           </div>
           <span className="pill pill--ghost">Позвать</span>
+        </button>
+        <button className="card row-card" onClick={() => go("profile")}>
+          <span className="row-art hue-mines"><img src="/gifts/toybear.webp" alt="" /></span>
+          <div className="row-card-body">
+            <b>Инвентарь</b>
+            <span className="hint">продать или вывести подарки</span>
+          </div>
+          <span className="pill pill--ghost">Открыть</span>
         </button>
       </div>
 

@@ -3,11 +3,13 @@ import functools
 from datetime import timedelta
 from decimal import Decimal, InvalidOperation
 
-from fastapi import APIRouter, Depends, Header, HTTPException, WebSocket, WebSocketDisconnect
+import time
+
+from fastapi import APIRouter, Depends, Header, HTTPException, Response, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 
-from . import games, gifts
+from . import arcade, games, gifts, mines, tower, wheel
 from .auth import current_user
 from .bot import create_stars_link, notify_withdrawal
 from .config import get_settings
@@ -48,7 +50,8 @@ def game_errors(fn):
             return await fn(*args, **kwargs)
         except InsufficientFunds:
             raise HTTPException(400, "Недостаточно средств")
-        except (games.GameError, CrashError, gifts.GiftError, CryptoPayError) as e:
+        except (games.GameError, CrashError, gifts.GiftError, CryptoPayError, mines.MinesError,
+                tower.TowerError, wheel.WheelError, arcade.ArcadeError) as e:
             raise HTTPException(400, str(e))
     return wrapper
 
@@ -260,14 +263,20 @@ async def deposit_crypto(body: CryptoBody, uid: int = Depends(current_user)) -> 
     return await cryptopay.create_invoice(uid, body.asset, amount)
 
 
+@router.get("/bonus")
+async def bonus_prizes() -> dict:
+    total = sum(w for _, w in games.DAILY_PRIZES)
+    return {"prizes": [{"amount": games.coins(a), "chance": w / total} for a, w in games.DAILY_PRIZES]}
+
+
 @router.post("/bonus")
 @game_errors
 async def bonus(uid: int = Depends(current_user)) -> dict:
     async with Session() as s:
-        amount = await games.claim_daily_bonus(s, uid)
+        r = await games.claim_daily_case(s, uid)
         await s.commit()
         bal = (await s.get(User, uid)).balance
-    return {"amount": amount, "balance": bal}
+    return {**r, "balance": bal}
 
 
 class SeedBody(BaseModel):
@@ -292,7 +301,9 @@ async def history(uid: int = Depends(current_user), demo: bool = Depends(demo_mo
 
 
 ONLINE_KINDS = {"cases": ("case_open",), "upgrade": ("upgrade", "upgrade_win", "upgrade_lose"),
-                "crash": ("crash_bet",)}
+                "crash": ("crash_bet",), "mines": ("mines_bet",),
+                "tower": ("tower_bet",), "wheel": ("wheel_bet",),
+                **{g: (f"{g}_bet",) for g in [*arcade.INSTANT, *arcade.ROUNDS]}}
 
 
 @router.get("/online")
@@ -317,12 +328,188 @@ async def app_config() -> dict:
             "news": st.news_channel or None}
 
 
+class MinesStart(BaseModel):
+    bet: int = Field(gt=0)
+    mines: int = Field(ge=1, le=24)
+
+
+class MinesOpen(BaseModel):
+    cell: int = Field(ge=0, le=24)
+
+
+async def _mines_reply(s, uid: int, demo: bool, g) -> dict:
+    return {"game": mines.state(g), "balance": bal_of(await s.get(User, uid), demo)}
+
+
+@router.get("/mines")
+async def mines_get(uid: int = Depends(current_user), demo: bool = Depends(demo_mode)) -> dict:
+    async with Session() as s:
+        return await _mines_reply(s, uid, demo, await mines.active(s, uid, demo))
+
+
+@router.post("/mines/start")
+@game_errors
+async def mines_start(body: MinesStart, uid: int = Depends(current_user), demo: bool = Depends(demo_mode)) -> dict:
+    async with Session() as s:
+        g = await mines.start(s, uid, body.bet, body.mines, demo)
+        await s.commit()
+        return await _mines_reply(s, uid, demo, g)
+
+
+@router.post("/mines/open")
+@game_errors
+async def mines_open(body: MinesOpen, uid: int = Depends(current_user), demo: bool = Depends(demo_mode)) -> dict:
+    async with Session() as s:
+        g = await mines.open_cell(s, uid, body.cell, demo)
+        await s.commit()
+        return await _mines_reply(s, uid, demo, g)
+
+
+@router.post("/mines/cashout")
+@game_errors
+async def mines_cashout(uid: int = Depends(current_user), demo: bool = Depends(demo_mode)) -> dict:
+    async with Session() as s:
+        g = await mines.cashout(s, uid, demo)
+        await s.commit()
+        return await _mines_reply(s, uid, demo, g)
+
+
+class TowerStart(BaseModel):
+    bet: int = Field(gt=0)
+    difficulty: str
+
+
+class TowerPick(BaseModel):
+    col: int = Field(ge=0, le=3)
+
+
+async def _tower_reply(s, uid: int, demo: bool, g) -> dict:
+    return {"game": tower.state(g), "balance": bal_of(await s.get(User, uid), demo)}
+
+
+@router.get("/tower")
+async def tower_get(uid: int = Depends(current_user), demo: bool = Depends(demo_mode)) -> dict:
+    async with Session() as s:
+        return await _tower_reply(s, uid, demo, await tower.active(s, uid, demo))
+
+
+@router.post("/tower/start")
+@game_errors
+async def tower_start(body: TowerStart, uid: int = Depends(current_user), demo: bool = Depends(demo_mode)) -> dict:
+    async with Session() as s:
+        g = await tower.start(s, uid, body.bet, body.difficulty, demo)
+        await s.commit()
+        return await _tower_reply(s, uid, demo, g)
+
+
+@router.post("/tower/pick")
+@game_errors
+async def tower_pick(body: TowerPick, uid: int = Depends(current_user), demo: bool = Depends(demo_mode)) -> dict:
+    async with Session() as s:
+        g = await tower.pick(s, uid, body.col, demo)
+        await s.commit()
+        return await _tower_reply(s, uid, demo, g)
+
+
+@router.post("/tower/cashout")
+@game_errors
+async def tower_cashout(uid: int = Depends(current_user), demo: bool = Depends(demo_mode)) -> dict:
+    async with Session() as s:
+        g = await tower.cashout(s, uid, demo)
+        await s.commit()
+        return await _tower_reply(s, uid, demo, g)
+
+
+@router.get("/wheel")
+async def wheel_info() -> dict:
+    return {"wheels": wheel.WHEELS}
+
+
+class WheelSpin(BaseModel):
+    bet: int = Field(gt=0)
+    risk: str
+
+
+@router.post("/wheel/spin")
+@game_errors
+async def wheel_spin(body: WheelSpin, uid: int = Depends(current_user), demo: bool = Depends(demo_mode)) -> dict:
+    async with Session() as s:
+        r = await wheel.spin(s, uid, body.bet, body.risk, demo)
+        await s.commit()
+        return {**r, "balance": bal_of(await s.get(User, uid), demo)}
+
+
+@router.get("/arcade")
+async def arcade_tables() -> dict:
+    return arcade.tables()
+
+
+class PlayBody(BaseModel):
+    bet: int = Field(gt=0)
+    params: dict = Field(default_factory=dict)
+
+
+@router.post("/play/{game}")
+@game_errors
+async def play(game: str, body: PlayBody, uid: int = Depends(current_user), demo: bool = Depends(demo_mode)) -> dict:
+    async with Session() as s:
+        r = await arcade.play(s, uid, game, body.bet, body.params, demo)
+        await s.commit()
+        return {**r, "balance": bal_of(await s.get(User, uid), demo)}
+
+
+class RoundBody(BaseModel):
+    action: str
+    bet: int = 0
+
+
+@router.get("/round/{game}")
+@game_errors
+async def round_get(game: str, uid: int = Depends(current_user), demo: bool = Depends(demo_mode)) -> dict:
+    async with Session() as s:
+        return {"game": await arcade.round_get(s, uid, game, demo), "balance": bal_of(await s.get(User, uid), demo)}
+
+
+@router.post("/round/{game}")
+@game_errors
+async def round_act(game: str, body: RoundBody, uid: int = Depends(current_user),
+                    demo: bool = Depends(demo_mode)) -> dict:
+    async with Session() as s:
+        g = await arcade.round_action(s, uid, game, body.action, body.bet, demo)
+        await s.commit()
+        return {"game": g, "balance": bal_of(await s.get(User, uid), demo)}
+
+
 @router.post("/demo/refill")
 async def demo_refill(uid: int = Depends(current_user)) -> dict:
     async with Session() as s:
         bal = await refill_demo(s, uid)
         await s.commit()
     return {"balance": bal}
+
+
+_avatars: dict[int, tuple[float, bytes | None]] = {}
+AVATAR_TTL = 3600
+
+
+@router.get("/avatar/{user_id}")
+async def avatar(user_id: int) -> Response:
+    """Фото профиля Telegram через бота (photo_url в initData приходит не во всех клиентах). Кэш на час."""
+    cached = _avatars.get(user_id)
+    if not cached or time.time() - cached[0] > AVATAR_TTL:
+        data = None
+        if runtime.bot:
+            try:
+                photos = await runtime.bot.get_user_profile_photos(user_id, limit=1)
+                if photos.photos:
+                    size = photos.photos[0][-1] if len(photos.photos[0]) < 3 else photos.photos[0][1]  # ~320px
+                    data = (await runtime.bot.download(size.file_id)).read()
+            except Exception:
+                data = None
+        cached = _avatars[user_id] = (time.time(), data)
+    if not cached[1]:
+        raise HTTPException(404, "Нет фото")
+    return Response(cached[1], media_type="image/jpeg", headers={"Cache-Control": "public, max-age=3600"})
 
 
 @router.get("/live")

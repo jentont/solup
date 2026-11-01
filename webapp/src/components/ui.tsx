@@ -1,4 +1,6 @@
 // Общие элементы Solutions Design: заголовок раздела с рукописной подписью и иконки.
+import { useState, type ReactNode } from "react";
+import { tg } from "../api";
 
 export function SecTitle({ hand, title, small }: { hand?: string; title: string; small?: boolean }) {
   return (
@@ -8,6 +10,58 @@ export function SecTitle({ hand, title, small }: { hand?: string; title: string;
     </div>
   );
 }
+
+// Фото профиля: из Telegram (своё), иначе через бота с сервера, иначе первая буква имени
+export function Avatar({ id, name, className = "" }: { id?: number; name?: string; className?: string }) {
+  const own = tg?.initDataUnsafe?.user;
+  const [src, setSrc] = useState<string | null>(
+    own?.id === id && own?.photo_url ? own.photo_url : id ? `/api/avatar/${id}` : null,
+  );
+  return (
+    <span className={`avatar-x ${className}`}>
+      {src ? <img src={src} alt="" onError={() => setSrc(src.startsWith("/api/") || !id ? null : `/api/avatar/${id}`)} />
+        : <b>{name?.[0]?.toUpperCase() ?? "?"}</b>}
+    </span>
+  );
+}
+
+// Шапка экрана игры: кнопка назад к играм и заголовок
+export function GameHead({ hand, title, onBack }: { hand: string; title: string; onBack: () => void }) {
+  return (
+    <div className="game-head">
+      <button className="game-back" onClick={onBack} aria-label="К играм"><Icon name="back" size={20} /></button>
+      <div>
+        <span className="sec-hand">{hand}</span>
+        <h2 className="game-head-title">{title}</h2>
+      </div>
+    </div>
+  );
+}
+
+// Панель ставки для игр: сумма с быстрыми кнопками, опции игры и главная кнопка
+export function BetPanel({ bet, setBet, balance, children, action }: {
+  bet: string; setBet: (v: string) => void; balance: number; children?: ReactNode; action: ReactNode;
+}) {
+  const num = parseFloat(bet.replace(",", ".")) || 0;
+  const set = (v: number) => setBet(String(Math.max(1, Math.floor(v * 100) / 100)));
+  return (
+    <div className="bet-panel">
+      <div className="bet-row-in">
+        <div className="bet-input">
+          <i className="coin" />
+          <input inputMode="decimal" value={bet} onChange={(e) => setBet(e.target.value)} aria-label="Ставка" />
+        </div>
+        <button className="bet-q" onClick={() => set(num / 2)}>½</button>
+        <button className="bet-q" onClick={() => set(num * 2)}>×2</button>
+        <button className="bet-q" onClick={() => set(balance / 100)}>MAX</button>
+      </div>
+      {children}
+      {action}
+    </div>
+  );
+}
+
+export const toCents = (bet: string) => Math.round(parseFloat(bet.replace(",", ".")) * 100);
 
 const PATHS: Record<string, string> = {
   home: "M4 11.2 12 4l8 7.2V20a1 1 0 0 1-1 1h-4.5v-5.5h-5V21H5a1 1 0 0 1-1-1z",
@@ -23,6 +77,8 @@ const PATHS: Record<string, string> = {
   sun: "M12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10zm-1-5h2v3h-2zm0 17h2v3h-2zM2 11h3v2H2zm17 0h3v2h-3zM4.2 5.6l1.4-1.4 2.1 2.1-1.4 1.4zm12.1 12.1 1.4-1.4 2.1 2.1-1.4 1.4zM4.2 18.4l2.1-2.1 1.4 1.4-2.1 2.1zM16.3 6.3l2.1-2.1 1.4 1.4-2.1 2.1z",
   moon: "M20.5 14.6A8.5 8.5 0 0 1 9.4 3.5a8.5 8.5 0 1 0 11.1 11.1z",
   arrow: "M5 11h11.2l-4.6-4.6L13 5l7 7-7 7-1.4-1.4 4.6-4.6H5z",
+  back: "M19 11H7.8l4.6-4.6L11 5l-7 7 7 7 1.4-1.4L7.8 13H19z",
+  games: "M7.5 6h9a5.5 5.5 0 0 1 5.3 7l-1.3 4.6a2.6 2.6 0 0 1-4.5 1L13.9 16h-3.8l-2.1 2.6a2.6 2.6 0 0 1-4.5-1L2.2 13A5.5 5.5 0 0 1 7.5 6zM7 9v1.5H5.5v1.5H7v1.5h1.5V12H10v-1.5H8.5V9zm9.5 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm-2 2a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm4 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2z",
 };
 
 export function Icon({ name, size = 22 }: { name: keyof typeof PATHS | string; size?: number }) {

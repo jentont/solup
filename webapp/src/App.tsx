@@ -4,11 +4,24 @@ import { Home } from "./pages/Home";
 import { Cases } from "./pages/Cases";
 import { Upgrade } from "./pages/Upgrade";
 import { Crash } from "./pages/Crash";
+import { Mines } from "./pages/Mines";
+import { Tower } from "./pages/Tower";
+import { Wheel } from "./pages/Wheel";
+import { Plinko } from "./pages/Plinko";
+import { Dice } from "./pages/Dice";
+import { Limbo } from "./pages/Limbo";
+import { Coinflip } from "./pages/Coinflip";
+import { Roulette } from "./pages/Roulette";
+import { HiLo } from "./pages/HiLo";
+import { Blackjack } from "./pages/Blackjack";
+import { Slots } from "./pages/Slots";
+import { Keno } from "./pages/Keno";
+import { Rps } from "./pages/Rps";
 import { Profile } from "./pages/Profile";
 import { Deposit } from "./components/Deposit";
 import { Wallet } from "./components/Wallet";
 import { LiveFeed } from "./components/LiveFeed";
-import { Icon } from "./components/ui";
+import { Avatar, Icon } from "./components/ui";
 
 type Ctx = {
   me: Me | null;
@@ -17,19 +30,22 @@ type Ctx = {
   toast: (text: string, kind?: "ok" | "err") => void;
   openDeposit: () => void;
   demo: boolean;
+  go: (tab: string) => void;
+  dark: boolean;
+  toggleTheme: () => void;
 };
 
 const AppCtx = createContext<Ctx>(null as any);
 export const useApp = () => useContext(AppCtx);
 
+// В меню три раздела; экраны игр открываются с главной и подсвечивают «Игры»
 const TABS = [
-  { id: "home", label: "Главная", icon: "home" },
+  { id: "home", label: "Игры", icon: "games" },
   { id: "cases", label: "Кейсы", icon: "box" },
-  { id: "upgrade", label: "Апгрейд", icon: "bolt" },
-  { id: "crash", label: "Краш", icon: "rocket" },
   { id: "profile", label: "Профиль", icon: "user" },
 ] as const;
-type Tab = (typeof TABS)[number]["id"];
+const GAME_TABS = ["upgrade", "crash", "mines", "tower", "wheel", "plinko", "dice", "limbo", "coinflip", "roulette", "hilo", "blackjack", "slots", "keno", "rps"] as const;
+type Tab = (typeof TABS)[number]["id"] | (typeof GAME_TABS)[number];
 
 export function App() {
   const [me, setMe] = useState<Me | null>(null);
@@ -63,6 +79,11 @@ export function App() {
   useEffect(() => {
     tg?.ready();
     tg?.expand();
+    // На телефоне — на весь экран, без шапки Telegram; свайп вниз не закрывает приложение
+    if (["ios", "android"].includes(tg?.platform) && tg?.isVersionAtLeast?.("8.0")) {
+      try { tg.requestFullscreen(); } catch { /* старый клиент */ }
+    }
+    if (tg?.isVersionAtLeast?.("7.7")) tg.disableVerticalSwipes();
     refresh();
   }, [refresh]);
 
@@ -82,7 +103,7 @@ export function App() {
       const d = theme === "auto" ? system : theme === "dark";
       document.body.classList.toggle("dark", d);
       setDark(d);
-      const bg = d ? "#000000" : "#F5F5F7";
+      const bg = d ? "#090A16" : "#F3F4FA";
       tg?.setHeaderColor?.(bg);
       tg?.setBackgroundColor?.(bg);
     };
@@ -120,9 +141,10 @@ export function App() {
   }
   if (!me || splash) {
     return (
-      <div className="splash">
-        <img className="logo logo--light" src="/brand/solup-light.svg" alt="SolUP" />
-        <img className="logo logo--dark" src="/brand/solup-dark.svg" alt="SolUP" />
+      <div className="boot">
+        <img className="boot-logo" src="/brand/solup-word-dark.svg" alt="SolUP" />
+        <div className="boot-hand">загружаем подарки…</div>
+        <div className="boot-bar"><i /></div>
       </div>
     );
   }
@@ -157,41 +179,59 @@ export function App() {
     toast,
     openDeposit: () => (demo ? refillDemo() : setDeposit(true)),
     demo,
+    go,
+    dark,
+    toggleTheme,
   };
+  const navTab = (GAME_TABS as readonly string[]).includes(tab) ? "home" : tab;
+  const bonusReady = !me.bonus_available_at || Date.parse(me.bonus_available_at) <= Date.now();
 
   return (
     <AppCtx.Provider value={ctx}>
       <div className="app">
         <header className="topbar">
           <button className="brand" onClick={() => go("home")} aria-label="SolUP">
-            <span className="brand-mark"><img src="/brand/cat.png" alt="" /></span>
             <img className="logo logo--light" src="/brand/solup-word-light.svg" alt="SolUP" />
             <img className="logo logo--dark" src="/brand/solup-word-dark.svg" alt="SolUP" />
           </button>
           <div className="top-right">
-          <button className="icon-btn" onClick={toggleTheme} aria-label={dark ? "Светлая тема" : "Тёмная тема"}>
-            <Icon name={dark ? "sun" : "moon"} size={20} />
-          </button>
           <button className="balance" onClick={() => setWallet(true)}>
-            {demo && <span className="balance-tag">демо</span>}
-            <span className="balance-value">{shownMe ? fmt(shownMe.balance) : "—"}</span>
             <i className="coin" />
-            <span className="balance-plus"><Icon name="plus" size={14} /></span>
+            <span className="balance-value">{shownMe ? fmt(shownMe.balance) : "—"}</span>
+            {demo && <span className="balance-tag">демо</span>}
+          </button>
+          <button className="topup" onClick={ctx.openDeposit}>Пополнить</button>
+          <button className="top-avatar" onClick={() => go("profile")} aria-label="Профиль">
+            <Avatar id={me.id} name={me.first_name} />
           </button>
           </div>
         </header>
-        <LiveFeed />
+        {tab === "home" && <LiveFeed />}
         <main className="content" key={demo ? "demo" : "real"}>
           {tab === "home" && <Home go={go} />}
           {tab === "cases" && <Cases />}
           {tab === "upgrade" && <Upgrade />}
           {tab === "crash" && <Crash />}
+          {tab === "mines" && <Mines />}
+          {tab === "tower" && <Tower />}
+          {tab === "wheel" && <Wheel />}
+          {tab === "plinko" && <Plinko />}
+          {tab === "dice" && <Dice />}
+          {tab === "limbo" && <Limbo />}
+          {tab === "coinflip" && <Coinflip />}
+          {tab === "roulette" && <Roulette />}
+          {tab === "hilo" && <HiLo />}
+          {tab === "blackjack" && <Blackjack />}
+          {tab === "slots" && <Slots />}
+          {tab === "keno" && <Keno />}
+          {tab === "rps" && <Rps />}
           {tab === "profile" && <Profile key={profileView} initialView={profileView} />}
         </main>
         <nav className="tabbar">
           {TABS.map((t) => (
-            <button key={t.id} className={`tab ${tab === t.id ? "tab--on" : ""}`} onClick={() => go(t.id)}>
-              <Icon name={t.icon} />
+            <button key={t.id} className={`tab ${navTab === t.id ? "tab--on" : ""}`} onClick={() => go(t.id)}>
+              {t.id === "cases" && bonusReady && <span className="tab-free">FREE</span>}
+              <Icon name={t.icon} size={18} />
               <span className="tab-label">{t.label}</span>
             </button>
           ))}

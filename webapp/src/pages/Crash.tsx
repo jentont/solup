@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { api, fmt, haptic, wsUrl } from "../api";
 import { useApp } from "../App";
-import { SecTitle } from "../components/ui";
+import { GameHead, SecTitle } from "../components/ui";
 
 const GROWTH = 0.07; // должно совпадать с backend/app/crash.py
 const multAt = (ms: number) => Math.floor(100 * Math.exp((GROWTH * Math.max(ms, 0)) / 1000)) / 100;
@@ -20,7 +20,7 @@ type State = {
 };
 
 export function Crash() {
-  const { me, refresh, toast } = useApp();
+  const { me, refresh, toast, go } = useApp();
   const [st, setSt] = useState<State | null>(null);
   const [amount, setAmount] = useState("10");
   const [auto, setAuto] = useState("");
@@ -153,7 +153,8 @@ export function Crash() {
   const potential = canCashout && st ? Math.floor(myBet!.amount * multAt(now - st.started_at)) : 0;
 
   return (
-    <div>
+    <div className="game-page">
+      <GameHead hand="успей забрать" title="Краш" onBack={() => go("home")} />
       <div className="crash-history">
         {st?.history.slice().reverse().map((p, i) => (
           <span key={i} className={p >= 200 ? "hi" : "lo"}>{(p / 100).toFixed(2)}x</span>
