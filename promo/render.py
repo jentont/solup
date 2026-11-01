@@ -3,6 +3,7 @@ Edge в фоне снимает кадры, ffmpeg собирает видео �
 
     .venv/Scripts/python promo/render.py insert            # вставка: тёмная, зелёная, прозрачная + звук
     .venv/Scripts/python promo/render.py promo             # промо-ролик
+    .venv/Scripts/python promo/render.py upgrade           # рулетка → апгрейд → «Апай подарки в SolUP»
     .venv/Scripts/python promo/render.py insert --frames 0.7 2.6 4.6 6.3   # отдельные кадры для проверки
 
 Результат — в promo/out/.
@@ -26,6 +27,7 @@ SR = 48000
 JOBS = {
     "insert": {"page": "insert.html", "size": (1280, 672), "scale": 1.5, "fps": 60, "variants": ["dark", "green", "alpha"]},
     "promo": {"page": "promo.html", "size": (1280, 720), "scale": 1.5, "fps": 30, "variants": ["dark"]},
+    "upgrade": {"page": "upgrade.html", "size": (1280, 672), "scale": 1.5, "fps": 60, "variants": ["dark", "green", "alpha"]},
 }
 
 

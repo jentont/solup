@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<title>SolUP — рулетка и апгрейд</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@500;600;700;800&family=Unbounded:wght@700;800;900&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="common.css" />
+<style>
+  /* Ролик 8,5 с по мотивам рекламы RubUP: рулетка из трёх карточек под прожекторами → выигрыш крупно →
+     апгрейд с кольцом шанса → «Улучшено ×N» → «Апай подарки в SolUP».
+     Рисуется на 1280×672 и снимается с масштабом 1,5 → 1920×1008. */
+  :root { --grad: linear-gradient(135deg, #4b83ff, #6a4dff); --gold: #ffc93d; --gold-2: #ff9f1a; }
+  #stage { width: 1280px; height: 672px; background: transparent; }
+  body.bg-dark #stage { background: #000; }
+  body.bg-green #stage { background: #00ff00; }
+  html:has(body.bg-alpha), body.bg-alpha, body.bg-alpha #stage { background: transparent; }
+
+  .panel {
+    position: absolute; left: 24px; top: 24px; width: 1232px; height: 624px; border-radius: 48px; overflow: hidden;
+    background: radial-gradient(80% 70% at 50% 0%, #1c2350 0%, #12152e 55%, #0b0d1e 100%);
+    box-shadow: inset 0 0 0 2px rgba(130, 150, 255, 0.28), inset 0 2px 0 rgba(255, 255, 255, 0.12), 0 30px 80px rgba(0, 0, 0, 0.6);
+  }
+  .floor { position: absolute; left: 22%; right: 22%; bottom: -46px; height: 92px; border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(255, 201, 61, 0.75), rgba(255, 159, 26, 0.25) 55%, transparent); }
+  .layer { position: absolute; inset: 0; }
+  .tri { position: absolute; left: 50%; width: 0; height: 0; transform: translateX(-50%); z-index: 6;
+    border-left: 13px solid transparent; border-right: 13px solid transparent; filter: drop-shadow(0 0 8px var(--gold)); }
+  .tri.top { top: 10px; border-top: 16px solid var(--gold); }
+  .tri.bot { bottom: 10px; border-bottom: 16px solid var(--gold); }
+
+  /* ===== рулетка ===== */
+  .rwin { position: absolute; left: 24px; top: 40px; width: 1184px; height: 500px; overflow: hidden; }
+  .rwin::before, .rwin::after { content: ""; position: absolute; top: 0; bottom: 0; width: 90px; z-index: 3; pointer-events: none; }
+  .rwin::before { left: 0; background: linear-gradient(90deg, #12152e, transparent); }
+  .rwin::after { right: 0; background: linear-gradient(-90deg, #12152e, transparent); }
+  .strip { position: absolute; left: 0; top: 34px; height: 430px; }
+  .card {
+    position: absolute; top: 0; width: 336px; height: 430px; border-radius: 30px; overflow: hidden;
+    background: linear-gradient(180deg, #1f2448, #151936); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.07);
+  }
+  /* прожектор сверху цвета редкости */
+  .card::before { content: ""; position: absolute; left: 0; right: 0; top: -10px; height: 340px;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--sc) 70%, transparent), transparent 85%);
+    clip-path: polygon(38% 0, 62% 0, 100% 100%, 0 100%); opacity: 0.75; filter: blur(4px); }
+  .card::after { content: ""; position: absolute; left: 20%; right: 20%; top: 300px; height: 40px; border-radius: 50%;
+    background: radial-gradient(closest-side, color-mix(in srgb, var(--sc) 60%, transparent), transparent); }
+  .card img { position: absolute; left: 50%; top: 92px; width: 220px; height: 220px; margin-left: -110px; object-fit: contain; z-index: 1;
+    filter: drop-shadow(0 18px 20px rgba(0, 0, 0, 0.55)); }
+  .card .name .coin, .side + .coin { background: linear-gradient(135deg, #ffd34d, #ff9a1f); }
+  .card .name { position: absolute; left: 50%; bottom: 26px; transform: translateX(-50%); z-index: 2; white-space: nowrap;
+    padding: 9px 20px; border-radius: 999px; background: rgba(8, 10, 24, 0.75); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.22);
+    font: 700 20px var(--f-body); opacity: 0; }
+  .sc-violet { --sc: #8d6bff; } .sc-gold { --sc: #ffc93d; } .sc-pink { --sc: #ff5fb0; } .sc-blue { --sc: #4aa3ff; } .sc-green { --sc: #3ee08a; }
+  .card.win { box-shadow: inset 0 0 0 4px var(--gold), 0 0 60px rgba(255, 201, 61, 0.6); }
+  .rays { position: absolute; left: 50%; top: 50%; width: 1100px; height: 1100px; margin: -550px 0 0 -550px; pointer-events: none;
+    background: repeating-conic-gradient(from 0deg, rgba(255, 210, 90, 0.38) 0 6deg, transparent 6deg 18deg);
+    -webkit-mask: radial-gradient(closest-side, #000 18%, transparent 70%); mask: radial-gradient(closest-side, #000 18%, transparent 70%); }
+
+  .spin-btn {
+    position: absolute; left: 50%; top: 420px; z-index: 7; display: flex; align-items: center; gap: 14px;
+    padding: 22px 54px; border-radius: 22px; background: var(--grad); color: #fff;
+    font: 800 32px var(--f-display); letter-spacing: -0.02em; text-transform: uppercase; white-space: nowrap;
+    box-shadow: 0 0 0 6px rgba(10, 12, 30, 0.85), inset 0 2px 0 rgba(255, 255, 255, 0.35), 0 14px 40px rgba(90, 100, 255, 0.55);
+  }
+  .tap { position: absolute; width: 90px; height: 90px; margin: -45px 0 0 -45px; border-radius: 50%; z-index: 20;
+    border: 4px solid rgba(255, 255, 255, 0.9); box-shadow: 0 0 24px rgba(255, 255, 255, 0.5); opacity: 0; }
+  .tap::after { content: ""; position: absolute; left: 50%; top: 50%; width: 22px; height: 22px; margin: -11px; border-radius: 50%; background: rgba(255, 255, 255, 0.9); }
+  .spark { position: absolute; width: 22px; height: 22px; z-index: 12; background: #fff8d6; opacity: 0;
+    clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%); filter: drop-shadow(0 0 6px var(--gold)); }
+
+  /* ===== апгрейд ===== */
+  .ucard { position: absolute; top: 30px; width: 330px; height: 396px; border-radius: 28px;
+    background: linear-gradient(180deg, #1f2448, #161a38); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.07);
+    display: flex; flex-direction: column; align-items: center; padding-top: 34px; }
+  .ucard img { width: 200px; height: 200px; object-fit: contain; filter: drop-shadow(0 16px 18px rgba(0, 0, 0, 0.55)); }
+  .ucard b { margin-top: 14px; font: 800 30px var(--f-display); letter-spacing: -0.03em; }
+  .ucard .sub { margin-top: 6px; display: flex; gap: 8px; align-items: center; font: 600 17px var(--f-body); color: #9aa0c8; }
+  .ucard .sub i { font-style: normal; padding: 3px 9px; border-radius: 8px; background: rgba(120, 140, 255, 0.18); color: #b9c4ff; font-weight: 700; }
+  .ucard .price { margin-top: 8px; display: flex; align-items: center; gap: 8px; font: 800 22px var(--f-display); }
+  .ucard .price .coin { background: linear-gradient(135deg, #ffd34d, #ff9a1f); }
+  .ucard .tag { padding: 3px 10px; border-radius: 8px; background: rgba(255, 201, 61, 0.18); color: var(--gold); font: 800 15px var(--f-display); }
+  .ucard .inv { display: none; color: #3dff9a; background: rgba(61, 255, 154, 0.14); }
+
+  .gauge { position: absolute; left: 442px; top: 40px; width: 348px; height: 348px; }
+  .gauge svg { position: absolute; inset: 0; overflow: visible; }
+  .gauge .core { position: absolute; inset: 34px; border-radius: 50%; background: radial-gradient(circle at 50% 40%, #232a5c, #0e1128 75%);
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.06); display: grid; place-items: center; align-content: center; }
+  .gauge .pct { font: 900 50px var(--f-display); letter-spacing: -0.04em; }
+  .gauge .lbl { font: 600 16px var(--f-body); color: #8d93c0; margin-top: -2px; }
+  .gauge .prize { position: absolute; left: 50%; top: 50%; width: 150px; height: 150px; margin: -104px 0 0 -75px; object-fit: contain; opacity: 0;
+    filter: drop-shadow(0 12px 16px rgba(0, 0, 0, 0.5)); }
+  .gauge .done { position: absolute; left: 0; right: 0; top: 246px; text-align: center; font: 800 21px var(--f-display); letter-spacing: -0.02em; color: var(--gold); opacity: 0; }
+  .needle { position: absolute; left: 174px; top: 174px; width: 0; height: 0; z-index: 3; }
+  .needle i { position: absolute; left: -16px; top: -196px; border-left: 16px solid transparent; border-right: 16px solid transparent;
+    border-top: 26px solid #fff; filter: drop-shadow(0 0 8px #fff); }
+
+  .bar { position: absolute; left: 30px; right: 30px; top: 448px; height: 76px; display: grid; grid-template-columns: 330px 1fr 330px; gap: 16px; }
+  .bal { border-radius: 18px; background: #1a1e3c; box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.06); padding: 12px 18px; position: relative; }
+  .bal b { font: 700 18px var(--f-body); } .bal small { display: block; font: 500 14px var(--f-body); color: #7f86b5; }
+  .bal .slider { position: absolute; left: 18px; right: 18px; bottom: 10px; height: 5px; border-radius: 3px; background: #2a3060; }
+  .bal .slider::before { content: ""; position: absolute; left: -2px; top: -5px; width: 15px; height: 15px; border-radius: 50%; background: #fff; }
+  .bal .val { position: absolute; right: 18px; top: 16px; font: 800 20px var(--f-display); display: flex; gap: 8px; align-items: center; }
+  .bal .val .coin { background: linear-gradient(135deg, #ffd34d, #ff9a1f); }
+  .up-btn { border-radius: 18px; background: var(--grad); display: flex; align-items: center; justify-content: center; gap: 12px;
+    font: 800 28px var(--f-display); letter-spacing: -0.02em; box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.3), 0 10px 30px rgba(90, 100, 255, 0.45); }
+  .chips { display: grid; grid-template-columns: repeat(6, 1fr); gap: 7px; }
+  .chips span { border-radius: 14px; background: #1a1e3c; box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.06);
+    display: grid; place-items: center; font: 800 17px var(--f-display); }
+
+  /* монета рисуется стилями: маска из SVG в локальном файле браузер не грузит */
+  .coin { display: inline-block; width: 0.85em; height: 0.85em; border-radius: 50%; vertical-align: -0.1em; -webkit-mask: none; mask: none;
+    background: radial-gradient(circle at 35% 30%, #fff3b0, #ffc21f 50%, #c07800) !important; box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.35), inset 0 -2px 0 rgba(0, 0, 0, 0.2); }
+
+  /* ===== финал ===== */
+  .apai { position: absolute; left: 0; right: 0; top: 118px; text-align: center; font: 900 44px var(--f-display); letter-spacing: -0.02em; }
+  .apai em { font-style: normal; background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 0 14px rgba(110, 120, 255, 0.6)); }
+  .logo { position: absolute; left: 50%; top: 188px; width: 640px; margin-left: -320px; filter: drop-shadow(0 18px 30px rgba(0, 0, 0, 0.6)); }
+  .swoosh { position: absolute; left: 50%; top: 392px; width: 380px; margin-left: -150px; overflow: visible; }
+  .side { position: absolute; object-fit: contain; filter: drop-shadow(0 18px 22px rgba(0, 0, 0, 0.6)); }
+  .mult { position: absolute; padding: 6px 14px; border-radius: 12px; background: rgba(255, 201, 61, 0.16); box-shadow: inset 0 0 0 2px rgba(255, 201, 61, 0.45);
+    color: var(--gold); font: 800 22px var(--f-display); }
+</style>
+</head>
+<body class="bg-dark">
+<div id="stage">
+  <div class="panel">
+    <div class="floor" id="floor"></div>
+
+    <!-- A. рулетка -->
+    <div class="layer" id="sA">
+      <div class="rwin">
+        <div class="rays" id="raysA"></div>
+        <div class="strip" id="strip"></div>
+      </div>
+      <div class="spin-btn" id="spinBtn">
+        <svg width="34" height="34" viewBox="0 0 24 24"><path fill="#fff" d="M21.9 3.6 18.6 19c-.2 1.1-.9 1.4-1.8.9l-5-3.7-2.4 2.3c-.3.3-.5.5-1 .5l.4-5.1 9.2-8.3c.4-.4-.1-.6-.6-.2L6 12.6 1.1 11c-1-.3-1.1-1 .2-1.5L20.6 2.1c.9-.3 1.6.2 1.3 1.5z"/></svg>
+        Крутить
+      </div>
+    </div>
+
+    <!-- B. апгрейд -->
+    <div class="layer" id="sB">
+      <div class="rays" id="raysB" style="left: 616px; top: 240px"></div>
+      <div class="ucard" id="from" style="left: 30px">
+        <img src="../webapp/public/gifts/lowrider.webp" />
+        <b>Low Rider</b>
+        <div class="sub">эпический <i>вход</i></div>
+        <div class="price">5 950 <i class="coin"></i></div>
+      </div>
+      <div class="gauge" id="gauge">
+        <svg viewBox="0 0 348 348">
+          <circle cx="174" cy="174" r="160" fill="none" stroke="#1d2250" stroke-width="22" />
+          <circle cx="174" cy="174" r="160" fill="none" stroke="rgba(255,255,255,.05)" stroke-width="2" stroke-dasharray="2 12" />
+          <defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#ffd34d" /><stop offset="1" stop-color="#ff9f1a" /></linearGradient></defs>
+          <circle id="arc" cx="174" cy="174" r="160" fill="none" stroke="url(#g)" stroke-width="22" stroke-linecap="round"
+                  transform="rotate(-90 174 174)" stroke-dasharray="0 1006" style="filter: drop-shadow(0 0 10px rgba(255,201,61,.7))" />
+        </svg>
+        <div class="core" id="core"><div class="pct" id="pct">0 %</div><div class="lbl">шанс</div></div>
+        <img class="prize" id="prize" src="../webapp/public/gifts/preciouspeach.webp" />
+        <div class="done" id="done">Улучшено ×8,40</div>
+        <div class="needle" id="needle"><i></i></div>
+      </div>
+      <div class="ucard" id="to" style="left: 872px">
+        <img src="../webapp/public/gifts/preciouspeach.webp" />
+        <b>Precious Peach</b>
+        <div class="sub">легендарный <i>цель</i></div>
+        <div class="price">50 000 <i class="coin"></i> <span class="tag" id="tagX">×8,40</span><span class="tag inv" id="tagInv">✓ В инвентаре</span></div>
+      </div>
+      <div class="bar">
+        <div class="bal"><b>Сумма баланса</b><small>макс 4 879</small><div class="val">0 <i class="coin"></i></div><div class="slider"></div></div>
+        <div class="up-btn" id="upBtn"><svg width="26" height="26" viewBox="0 0 24 24"><path fill="#fff" d="M12 4 4 12l1.4 1.4L12 6.8l6.6 6.6L20 12zm0 6-8 8 1.4 1.4 6.6-6.6 6.6 6.6L20 18z"/></svg>Улучшить</div>
+        <div class="chips"><span>×2</span><span>×4</span><span>×8</span><span>35%</span><span>55%</span><span>75%</span></div>
+      </div>
+    </div>
+
+    <!-- C. финал -->
+    <div class="layer" id="sC">
+      <img class="side" id="cL" src="../webapp/public/gifts/lowrider.webp" style="left: 50px; top: 230px; width: 250px; height: 250px" />
+      <img class="side" id="cR" src="../webapp/public/gifts/preciouspeach.webp" style="right: 60px; top: 220px; width: 240px; height: 240px" />
+      <div class="mult" id="cX" style="right: 128px; top: 470px">×8,40</div>
+      <img class="side" id="cTL" src="../webapp/public/gifts/lolpop.webp" style="left: 80px; top: 50px; width: 110px; height: 110px" />
+      <img class="side" id="cTR" src="../webapp/public/gifts/perfumebottle.webp" style="right: 90px; top: 50px; width: 110px; height: 110px" />
+      <div class="apai" id="apai"><em>АПАЙ</em> ПОДАРКИ В</div>
+      <img class="logo" id="logo" src="../webapp/public/brand/solup-word-dark.svg" />
+      <svg class="swoosh" id="swoosh" viewBox="0 0 380 70"><defs><linearGradient id="sw" x1="0" x2="1"><stop offset="0" stop-color="#4b83ff" /><stop offset="1" stop-color="#8f6bff" /></linearGradient></defs>
+        <path id="swPath" d="M10 30 C 110 70, 250 70, 340 22" fill="none" stroke="url(#sw)" stroke-width="12" stroke-linecap="round" />
+        <path id="swHead" d="M318 10 L352 18 L336 48" fill="none" stroke="#8f6bff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" /></svg>
+    </div>
+
+    <i class="tri top" id="triT"></i><i class="tri bot" id="triB"></i>
+    <div class="tap" id="tap"></div>
+    <div class="spark" id="sp1"></div><div class="spark" id="sp2"></div><div class="spark" id="sp3"></div><div class="spark" id="sp4"></div>
+  </div>
+</div>
+
+<script src="common.js"></script>
+<script>
+const params = new URLSearchParams(location.search);
+document.body.className = "bg-" + (params.get("bg") || "dark");
+
+const DUR = 8.5;
+const T = {
+  tap1: 0.55, spin: [0.68, 2.35], win1: [2.35, 3.2], toB: [3.15, 3.5],
+  fill: [3.55, 4.3], tap2: 4.55, run: [4.68, 5.95], win2: [5.95, 6.8], toC: [6.75, 7.1],
+};
+const CHANCE = 0.1131;
+
+// --- лента рулетки: [подарок, прожектор] ---
+const ITEMS = [
+  ["perfumebottle", "pink"], ["tophat", "gold"], ["lunarsnake", "violet"], ["plushpepe", "green"], ["iongem", "blue"],
+  ["lolpop", "pink"], ["durovscap", "gold"], ["swisswatch", "violet"], ["heartlocket", "pink"], ["mightyarm", "gold"],
+  ["crystalball", "violet"], ["jellybunny", "blue"], ["preciouspeach", "pink"], ["signetring", "violet"], ["lowrider", "gold"],
+  ["bunnymuffin", "pink"], ["electricskull", "blue"], ["genielamp", "violet"],
+];
+const WIN = 14, STEP = 360, CENTER = 592;
+const strip = $("#strip");
+const cards = ITEMS.map(([img, sc], i) => {
+  const d = document.createElement("div");
+  d.className = `card sc-${sc}`;
+  d.style.left = i * STEP + "px";
+  d.innerHTML = `<img src="${GIFT(img)}">` + (i === WIN ? `<div class="name">Low Rider · 5 950 <i class="coin"></i></div>` : "");
+  strip.appendChild(d);
+  return d;
+});
+const off0 = 1 * STEP + 168 - CENTER;
+const off1 = WIN * STEP + 168 - CENTER + 18;
+const offAt = (t) => lerp(off0, off1, ease.out5(seg(t, T.spin[0], T.spin[1])));
+
+// --- звуки ---
+const SFX = [{ t: T.tap1, k: "tap" }];
+{
+  let prev = Math.floor((offAt(T.spin[0]) + CENTER) / STEP);
+  for (let t = T.spin[0]; t <= T.spin[1]; t += 0.002) {
+    const idx = Math.floor((offAt(t) + CENTER) / STEP);
+    if (idx !== prev) { SFX.push({ t, k: "tick" }); prev = idx; }
+  }
+}
+SFX.push({ t: T.win1[0], k: "win" }, { t: T.toB[0], k: "whoosh" }, { t: T.tap2, k: "tap" });
+// стрелка бежит по кольцу: щелчок на каждой восьмой части оборота
+{
+  let prev = 0;
+  for (let t = T.run[0]; t <= T.run[1]; t += 0.002) {
+    const n = Math.floor(needleAt(t) / 45);
+    if (n !== prev) { SFX.push({ t, k: "tick" }); prev = n; }
+  }
+}
+SFX.push({ t: T.win2[0], k: "win2" }, { t: T.toC[0] + 0.05, k: "pop" });
+window.SFX = SFX;
+
+function needleAt(t) {
+  const stop = 360 * 4 + CHANCE * 360 * 0.55; // четыре оборота и остановка внутри золотой дуги
+  return ease.out5(seg(t, T.run[0], T.run[1])) * stop;
+}
+
+function tapAt(t, at, x, y) {
+  const k = seg(t, at - 0.12, at + 0.35);
+  if (k <= 0 || k >= 1) return false;
+  const press = seg(t, at - 0.12, at), grow = seg(t, at, at + 0.35);
+  css($("#tap"), { left: x + "px", top: y + "px", opacity: grow ? 1 - grow : press,
+    transform: `scale(${grow ? 1 + grow * 0.9 : 1.4 - press * 0.4})` });
+  return true;
+}
+
+function sparks(t, a, pts) {
+  ["#sp1", "#sp2", "#sp3", "#sp4"].forEach((id, i) => {
+    const [x, y] = pts[i];
+    const k = seg(t, a + i * 0.08, a + i * 0.08 + 0.7);
+    const s = Math.sin(k * Math.PI);
+    css($(id), { left: x + "px", top: y + "px", opacity: s, transform: `scale(${0.3 + s * 1.1}) rotate(${k * 90}deg)` });
+  });
+}
+
+const pctText = (k) => (k * 100).toFixed(2).replace(".", ",") + " %";
+
+function render(t) {
+  const pin = ease.back(seg(t, 0, 0.45));
+  css($(".panel"), { opacity: seg(t, 0, 0.25), transform: `scale(${0.92 + 0.08 * pin})` });
+  // золотые треугольники-указатели — только в рулетке
+  const triV = 1 - seg(t, T.toB[0], T.toB[1]);
+  css($("#triT"), { opacity: triV }); css($("#triB"), { opacity: triV });
+
+  // === A: рулетка ===
+  const aV = 1 - seg(t, T.toB[0], T.toB[1]);
+  css($("#sA"), { opacity: aV, display: aV > 0 ? "block" : "none" });
+  if (aV > 0) {
+    const off = offAt(t);
+    const v = Math.abs(offAt(t + 0.016) - off) / 0.016;
+    css(strip, { transform: `translateX(${-off}px)`, filter: `blur(${clamp(v / 700, 0, 12)}px)` });
+    const pop = ease.back(seg(t, T.win1[0], T.win1[0] + 0.4));
+    const dim = seg(t, T.win1[0], T.win1[0] + 0.3);
+    cards.forEach((c, i) => {
+      if (i === WIN) {
+        c.classList.toggle("win", t >= T.win1[0]);
+        css(c, { transform: `scale(${1 + 0.14 * pop})`, zIndex: 2 });
+        css($(".name", c), { opacity: seg(t, T.win1[0] + 0.15, T.win1[0] + 0.4) });
+      } else css(c, { opacity: 1 - 0.55 * dim, filter: `blur(${dim * 2}px)`, transform: "none", zIndex: 1 });
+    });
+    css($("#raysA"), { opacity: dim, transform: `rotate(${t * 18}deg) scale(${0.6 + 0.4 * pop})` });
+    // кнопка: нажатие и уход вниз на время прокрутки
+    const bk = seg(t, T.tap1 + 0.05, T.tap1 + 0.35);
+    css($("#spinBtn"), { opacity: 1 - bk, transform: `translateX(-50%) translateY(${bk * 30}px) scale(${t < T.tap1 ? 1 - 0.06 * seg(t, T.tap1 - 0.1, T.tap1) : 1})` });
+  }
+
+  // === B: апгрейд ===
+  const bV = seg(t, T.toB[0], T.toB[1]) * (1 - seg(t, T.toC[0], T.toC[1]));
+  css($("#sB"), { opacity: bV, display: bV > 0 ? "block" : "none" });
+  if (bV > 0) {
+    const inK = ease.out3(seg(t, T.toB[0], T.toB[1] + 0.1));
+    css($("#from"), { transform: `translateX(${(1 - inK) * -40}px)` });
+    css($("#to"), { transform: `translateX(${(1 - inK) * 40}px)` });
+    const fill = ease.out3(seg(t, T.fill[0], T.fill[1])) * CHANCE;
+    $("#arc").setAttribute("stroke-dasharray", `${fill * 1006} 1006`);
+    $("#pct").textContent = pctText(fill);
+    css($("#needle"), { transform: `rotate(${needleAt(t)}deg)`, opacity: seg(t, T.fill[1] - 0.2, T.fill[1]) });
+    // кнопка «Улучшить»: нажатие
+    css($("#upBtn"), { transform: `scale(${1 - 0.05 * Math.sin(seg(t, T.tap2 - 0.1, T.tap2 + 0.15) * Math.PI)})`,
+      filter: t > T.tap2 && t < T.win2[0] ? "brightness(0.8)" : "none" });
+    // выигрыш: в кольце — подарок и «Улучшено», лучи, карточка цели светится
+    const w = ease.back(seg(t, T.win2[0], T.win2[0] + 0.4));
+    const wv = seg(t, T.win2[0], T.win2[0] + 0.25);
+    css($("#core"), { opacity: 1 - wv });
+    css($("#prize"), { opacity: wv, transform: `scale(${0.5 + 0.5 * w})` });
+    css($("#done"), { opacity: wv, transform: `translateY(${(1 - w) * 10}px)` });
+    css($("#raysB"), { opacity: wv, transform: `rotate(${t * 20}deg) scale(${0.7 + 0.3 * w})` });
+    css($("#to"), { boxShadow: `inset 0 0 0 ${3 * wv}px #ffc93d, 0 0 ${60 * wv}px rgba(255,201,61,${0.5 * wv})` });
+    css($("#from"), { opacity: 1 - 0.55 * wv, filter: `grayscale(${wv})` });
+    css($("#tagX"), { display: t < T.win2[0] + 0.2 ? "inline-block" : "none" });
+    css($("#tagInv"), { display: t >= T.win2[0] + 0.2 ? "inline-block" : "none" });
+  }
+
+  // === C: финал ===
+  const cV = seg(t, T.toC[0], T.toC[1]);
+  css($("#sC"), { opacity: cV, display: cV > 0 ? "block" : "none" });
+  if (cV > 0) {
+    const s0 = T.toC[0];
+    const lk = ease.back(seg(t, s0 + 0.1, s0 + 0.55));
+    css($("#logo"), { transform: `scale(${0.6 + 0.4 * lk})`, opacity: seg(t, s0 + 0.1, s0 + 0.3) });
+    rise($("#apai"), t, s0, 0.4, 20);
+    const sw = seg(t, s0 + 0.45, s0 + 0.85);
+    $("#swPath").setAttribute("stroke-dasharray", `${sw * 400} 400`);
+    css($("#swHead"), { opacity: seg(t, s0 + 0.8, s0 + 0.9) });
+    const bob = (ph, a = 8) => `translateY(${Math.sin(t * 2.4 + ph) * a}px) rotate(${Math.sin(t * 1.6 + ph) * 5}deg)`;
+    css($("#cL"), { transform: bob(0) + ` scale(${ease.back(seg(t, s0 + 0.05, s0 + 0.5))})` });
+    css($("#cR"), { transform: bob(2) + ` scale(${ease.back(seg(t, s0 + 0.12, s0 + 0.57))})` });
+    css($("#cX"), { opacity: seg(t, s0 + 0.5, s0 + 0.7), transform: `scale(${ease.back(seg(t, s0 + 0.5, s0 + 0.8))})` });
+    css($("#cTL"), { transform: bob(1, 5) + ` scale(${ease.back(seg(t, s0 + 0.2, s0 + 0.6))})`, opacity: 0.85 });
+    css($("#cTR"), { transform: bob(3, 5) + ` scale(${ease.back(seg(t, s0 + 0.25, s0 + 0.65))})`, opacity: 0.85 });
+  }
+
+  // нажатия и искры
+  if (!tapAt(t, T.tap1, 616, 470) && !tapAt(t, T.tap2, 616, 486)) css($("#tap"), { opacity: 0 });
+  if (t >= T.win2[0] - 0.05) sparks(t, T.win2[0], [[440, 120], [770, 90], [790, 330], [460, 360]]);
+  else sparks(t, T.win1[0], [[400, 140], [820, 110], [840, 380], [380, 400]]);
+}
+
+boot(DUR, render);
+</script>
+</body>
+</html>
