@@ -1076,107 +1076,22 @@ body.dark .tabbar { background: color-mix(in srgb, #1a1d3c 80%, transparent); bo
 .case-art.big { max-width: 300px; margin: 0 auto 8px; border-radius: 26px; }
 .case-head-sub { font-size: 13px; font-weight: 700; color: var(--hint); }
 
-/* ============ v2: обложки игр — предмет игры и NFT-подарки вокруг (GameArt) ============ */
+/* ============ v2: обложки игр — два NFT-подарка на цвете игры (GameArt) ============ */
 .gtile { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.32), 0 8px 22px rgba(0, 0, 0, 0.32); }
 .gtile::before {
   content: ""; position: absolute; z-index: 2; inset: 0; border-radius: inherit; pointer-events: none;
   background: linear-gradient(155deg, rgba(255, 255, 255, 0.2), transparent 30%);
 }
 .gtile-floor {
-  position: absolute; z-index: 0; left: 10%; right: 10%; top: 60%; height: 18%; border-radius: 50%;
-  background: radial-gradient(closest-side, color-mix(in srgb, var(--h1) 80%, #fff), transparent); filter: blur(7px); opacity: 0.8;
+  position: absolute; z-index: 0; left: 14%; right: 14%; top: 62%; height: 14%; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.45), transparent); filter: blur(4px);
 }
-/* у игр с синими стеклянными предметами — синие и фиолетовые фоны, чтобы предмет не спорил с фоном */
-.hue-upgrade { --h1: #59b4ff; --h2: #1f56e0; --h3: #08164f; }
-.hue-cases { --h1: #7a8cff; --h2: #3330c9; --h3: #0f0b45; }
-.hue-tower { --h1: #4fd7ff; --h2: #1360b8; --h3: #061f45; }
-.hue-wheel { --h1: #b27bff; --h2: #4a2bd0; --h3: #150a4a; }
-.hue-blackjack { --h1: #45e28d; --h2: #0d6a3a; --h3: #03241a; }
-
-.ga { position: absolute; z-index: 1; inset: 0 0 18% 0; }
-.ga-main { position: absolute; left: 50%; top: 50%; width: 74%; height: 70%; translate: -50% -50%; display: grid; place-items: center;
-  animation: ga-float 4.5s ease-in-out infinite; }
-.gtile:nth-child(2n) .ga-main { animation-delay: -2.2s; }
-.ga-main > img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 0 12px color-mix(in srgb, var(--h1) 70%, transparent)) drop-shadow(0 10px 10px rgba(0, 0, 20, 0.5)); }
-.ga-g { position: absolute; width: 34%; object-fit: contain; filter: drop-shadow(0 8px 8px rgba(0, 0, 0, 0.45)); }
-.ga-g.g1 { left: 2%; top: 4%; rotate: -16deg; }
-.ga-g.g2 { right: 2%; top: 10%; width: 30%; rotate: 14deg; }
-.ga-g.g3 { left: 4%; bottom: -4%; width: 30%; rotate: 10deg; z-index: 2; }
-.ga-spark { position: absolute; z-index: 3; width: 9px; height: 9px; background: #fff; opacity: 0.9;
-  clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%); animation: spark 2.4s ease-in-out infinite; }
-.ga-spark.s1 { right: 14%; bottom: 12%; }
-.ga-spark.s2 { left: 44%; top: 4%; width: 7px; height: 7px; animation-delay: -1.2s; }
-@keyframes ga-float { 50% { translate: -50% calc(-50% - 5px); } }
-.gtile:hover .ga-main { scale: 1.06; }
+.gtile-img { animation: ga-float 4.5s ease-in-out infinite; }
+.gtile-img.back { animation-delay: -2.2s; }
+.gtile:nth-child(2n) .gtile-img { animation-delay: -1.4s; }
+@keyframes ga-float { 50% { translate: 0 -5px; } }
 .gtile-title { z-index: 3; font-size: 15px; -webkit-text-stroke: 4px rgba(0, 0, 0, 0.3); paint-order: stroke fill; }
-@media (prefers-reduced-motion: reduce) { .ga-main { animation: none; } }
-
-/* Слот-машина */
-.ga-slots { position: relative; width: 92%; padding: 16% 6% 8%; border-radius: 14px;
-  background: linear-gradient(180deg, #ff5a6a, #b0122a); box-shadow: inset 0 0 0 3px #ffd04a, inset 0 -6px 0 rgba(0, 0, 0, 0.25), 0 8px 14px rgba(0, 0, 0, 0.45); }
-.ga-slots-top { position: absolute; left: 50%; top: -12%; translate: -50% 0; padding: 2px 10px; border-radius: 10px; background: linear-gradient(180deg, #ffe066, #ff9a1f);
-  color: #7a1010; font: 900 12px var(--f-display); box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4); }
-.ga-slots-win { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; padding: 4px; border-radius: 8px; background: #fff; box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.4); }
-.ga-slots-win img { width: 100%; aspect-ratio: 1; object-fit: contain; }
-.ga-slots-lever { position: absolute; right: -9%; top: 18%; width: 5px; height: 42%; border-radius: 3px; background: #c9cfe0; }
-.ga-slots-lever::before { content: ""; position: absolute; left: -4px; top: -8px; width: 13px; height: 13px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #ff9aa5, #e0263c); }
-
-/* Плинко */
-.ga-plinko { position: relative; display: grid; gap: 7px; justify-items: center; }
-.ga-plinko div { display: flex; gap: 9px; }
-.ga-plinko div i { width: 7px; height: 7px; border-radius: 50%; background: #fff; box-shadow: 0 0 6px rgba(255, 255, 255, 0.8); }
-.ga-ball { position: absolute; left: 54%; top: 18%; width: 16px; height: 16px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #fff3b0, #ffb000); box-shadow: 0 0 12px #ffb000; }
-
-/* Кости */
-.ga-dice { position: relative; width: 100%; height: 100%; }
-.ga-dice i { position: absolute; width: 46%; aspect-ratio: 1; border-radius: 18%; background-color: #fff; display: grid; grid-template: repeat(3, 1fr) / repeat(3, 1fr); padding: 12%;
-  box-shadow: inset -4px -5px 0 rgba(0, 0, 0, 0.12), 0 8px 12px rgba(0, 0, 0, 0.45); }
-.ga-dice .d5 { left: 8%; top: 16%; rotate: -14deg;
-  background-image: radial-gradient(circle at 22% 22%, #15172b 7%, transparent 8%), radial-gradient(circle at 78% 22%, #15172b 7%, transparent 8%), radial-gradient(circle at 50% 50%, #e0263c 8%, transparent 9%), radial-gradient(circle at 22% 78%, #15172b 7%, transparent 8%), radial-gradient(circle at 78% 78%, #15172b 7%, transparent 8%); }
-.ga-dice .d3 { right: 6%; top: 34%; rotate: 16deg;
-  background-image: radial-gradient(circle at 22% 22%, #15172b 7%, transparent 8%), radial-gradient(circle at 50% 50%, #15172b 7%, transparent 8%), radial-gradient(circle at 78% 78%, #15172b 7%, transparent 8%); }
-
-/* Лимбо */
-.ga-limbo { position: relative; width: 100%; height: 100%; display: grid; place-items: center; }
-.ga-limbo img { width: 76%; filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.45)); }
-.ga-limbo b { position: absolute; right: -2%; top: 2%; padding: 2px 7px; border-radius: 9px; background: rgba(5, 6, 20, 0.6); color: #5ff0ff; font: 900 13px var(--f-display); text-shadow: 0 0 8px #5ff0ff; }
-
-/* Монетка */
-.ga-coin { width: 78%; aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center;
-  background: radial-gradient(circle at 35% 30%, #fff3b0, #ffc21f 45%, #b86e00); box-shadow: inset 0 0 0 5px rgba(255, 255, 255, 0.35), inset 0 -6px 0 rgba(0, 0, 0, 0.18), 0 10px 16px rgba(0, 0, 0, 0.45); }
-.ga-coin img { width: 52%; filter: brightness(0.35) sepia(1) saturate(3); }
-
-/* Рулетка: 37 секторов, зеро зелёное */
-.ga-roulette { width: 84%; aspect-ratio: 1; border-radius: 50%; position: relative;
-  background: conic-gradient(#1fbf75 0 9.73deg, transparent 9.73deg), repeating-conic-gradient(#e0263c 0 9.73deg, #15172b 9.73deg 19.46deg);
-  box-shadow: 0 0 0 5px #d99a1f, 0 0 0 7px #7a4a00, 0 10px 16px rgba(0, 0, 0, 0.5); animation: ga-spin 18s linear infinite; }
-.ga-roulette i { position: absolute; inset: 30%; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #ffe08a, #b07a10); box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5); }
-.ga-roulette::after { content: ""; position: absolute; left: 50%; top: 9%; width: 9px; height: 9px; margin-left: -4.5px; border-radius: 50%; background: #fff; box-shadow: 0 0 6px #fff; }
-@keyframes ga-spin { to { transform: rotate(360deg); } }
-
-/* Hi-Lo */
-.ga-hilo { position: relative; width: 100%; height: 100%; }
-.ga-hilo span { position: absolute; top: 14%; width: 44%; aspect-ratio: 0.7; border-radius: 8px; background: #fff; color: #15172b;
-  display: grid; place-items: center; align-content: center; font: 900 20px/1 var(--f-display); box-shadow: 0 8px 12px rgba(0, 0, 0, 0.45); }
-.ga-hilo span small { font-size: 16px; }
-.ga-hilo .c1 { left: 10%; rotate: -10deg; }
-.ga-hilo .c2 { right: 10%; rotate: 10deg; color: #e0263c; top: 22%; }
-.ga-hilo b { position: absolute; left: 50%; translate: -50% 0; font-size: 18px; text-shadow: 0 0 8px currentColor; }
-.ga-hilo .up { top: 0; color: #3dff9a; }
-.ga-hilo .down { bottom: 0; color: #ff6b78; }
-
-/* Кено */
-.ga-keno { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; width: 80%; }
-.ga-keno i { aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center; font: 800 10px var(--f-display); font-style: normal; color: #2a2f45;
-  background: radial-gradient(circle at 35% 30%, #fff, #c9cfe0); box-shadow: 0 3px 6px rgba(0, 0, 0, 0.35); }
-.ga-keno i.on { color: #fff; background: radial-gradient(circle at 35% 30%, #c8bdff, #6a4dff); box-shadow: 0 0 10px #9b8cff; }
-
-/* Камень-ножницы-бумага */
-.ga-rps { position: relative; width: 100%; height: 100%; }
-.ga-rps span { position: absolute; filter: drop-shadow(0 6px 6px rgba(0, 0, 0, 0.4)); }
-.ga-rps span:nth-child(1) { left: 6%; top: 30%; rotate: -14deg; font-size: 38px; }
-.ga-rps span:nth-child(2) { left: 36%; top: 0; font-size: 34px; }
-.ga-rps span:nth-child(3) { right: 4%; top: 34%; rotate: 14deg; font-size: 36px; }
+@media (prefers-reduced-motion: reduce) { .gtile-img { animation: none; } }
 
 /* Кейс со своим объектом: синее стекло, объект в центре, подарки по углам */
 .case-art--pic { background: radial-gradient(circle at 50% 46%, #3b86ff 0%, #1440c8 34%, #0a1c66 62%, #060f3a 100%); }
