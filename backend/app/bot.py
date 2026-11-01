@@ -8,7 +8,12 @@ from aiogram.types import (BusinessConnection, CallbackQuery, InlineKeyboardButt
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 
+from pathlib import Path
+
+from aiogram.types import FSInputFile
+
 from . import gifts
+from .branding import esc, pe
 from .config import get_settings
 from .db import Session
 from .models import Deposit, InventoryItem, Item, Transaction, User, Withdrawal
@@ -49,6 +54,10 @@ async def create_stars_link(bot: Bot, user_id: int, stars: int) -> str:
 
 # --- пользователи ---
 
+START_GIF = Path(__file__).parent / "assets" / "start.mp4"
+_start_anim: str | None = None
+
+
 @router.message(CommandStart())
 async def start(message: Message, command: CommandObject) -> None:
     ref = None
@@ -58,10 +67,22 @@ async def start(message: Message, command: CommandObject) -> None:
     async with Session() as s:
         user = await get_or_create_user(s, u.id, u.username, u.first_name or "", referrer_id=ref)
         await s.commit()
-    await message.answer(
-        f"Привет, {u.first_name}! 👋\n\nОткрывай кейсы, делай апгрейды и играй в краш. "
-        f"Выигранные подарки можно вывести себе в Telegram.\n\nБаланс: {fmt(user.balance)}",
-        reply_markup=play_keyboard())
+    caption = (
+        f"{pe('👋')} Привет, <b>{esc(u.first_name)}</b>!\n\n"
+        f"{pe('📦')} Открывай кейсы с подарками\n"
+        f"{pe('⚡')} Делай апгрейды\n"
+        f"{pe('🚀')} Играй в краш\n"
+        f"{pe('🎁')} Выводи подарки себе в Telegram\n\n"
+        f"{pe('💰')} Баланс: <b>{fmt(user.balance)}</b>"
+    )
+    global _start_anim
+    try:
+        msg = await message.answer_animation(_start_anim or FSInputFile(START_GIF), caption=caption,
+                                             parse_mode="HTML", reply_markup=play_keyboard())
+        _start_anim = msg.animation.file_id if msg.animation else _start_anim  # дальше шлём по file_id
+    except Exception:
+        log.warning("не удалось отправить гифку /start", exc_info=True)
+        await message.answer(caption, parse_mode="HTML", reply_markup=play_keyboard())
 
 
 @router.message(Command("balance"))

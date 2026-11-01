@@ -9,6 +9,7 @@ from fastapi.staticfiles import StaticFiles
 
 from .api import router
 from .bot import create_bot
+from .branding import load_emoji, set_profile
 from .catalog import seed_catalog
 from .config import get_settings
 from .crash import engine
@@ -43,6 +44,8 @@ async def lifespan(app: FastAPI):
         bot, dp = create_bot()
         runtime.bot = bot
         runtime.bot_username = (await bot.get_me()).username
+        await load_emoji(bot)
+        await set_profile(bot)
         tasks.append(asyncio.create_task(
             dp.start_polling(bot, handle_signals=False, allowed_updates=dp.resolve_used_update_types())))
         log.info("бот @%s запущен", runtime.bot_username)

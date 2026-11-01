@@ -43,6 +43,8 @@ class Settings(BaseSettings):
 
     # Подвал Mini App: юзернейм поддержки (без @) и канал новостей
     support_username: str = ""
+    # Пак премиум-эмодзи для сообщений бота (имя из ссылки t.me/addemoji/...)
+    emoji_pack: str = "solutions_winter_by_solutions_chatbot"
     news_channel: str = ""
 
     # Разработка: разрешает заголовок "Authorization: dev <user_id>" без initData
