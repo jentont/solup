@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<style>
+  /* Простая аватарка бота: чёрный фон и логотип solup по центру (Telegram обрежет в круг). */
+  html, body { margin: 0; background: transparent; }
+  #stage { position: relative; width: 512px; height: 512px; background: #000; display: grid; place-items: center; overflow: hidden; }
+  body.glow #stage { background: radial-gradient(60% 50% at 50% 55%, #0c2a52 0%, #000 70%); }
+  #stage img { width: 78%; }
+  body.hand #stage img { width: 74%; transform: translateY(14px); }
+</style>
+</head>
+<body>
+<div id="stage"><img id="logo" src="../webapp/public/brand/solup-word-dark.svg" /></div>
+<script>
+  // ?v=plain — логотип на чёрном; ?v=glow — с мягким синим свечением; ?v=hand — логотип с рукописным «gifts»
+  const v = new URLSearchParams(location.search).get("v") || "plain";
+  document.body.className = v === "plain" ? "" : v === "hand" ? "glow hand" : "glow";
+  if (v === "hand") document.getElementById("logo").src = "../webapp/public/brand/solup-dark.svg";
+</script>
+</body>
+</html>

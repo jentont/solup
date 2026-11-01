@@ -1,0 +1,1 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><mask id="cut-mark"><rect x="1.0" y="1.0" width="98.0" height="98.0" fill="#fff"/><path d="M20.2,59.6 L50.0,34.6 L79.8,59.6" fill="none" stroke="#000" stroke-width="12.5" stroke-linecap="round" stroke-linejoin="round"/></mask><circle cx="50.0" cy="50.0" r="48.0" fill="#2997FF" mask="url(#cut-mark)"/></svg>

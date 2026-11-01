@@ -9,3 +9,4 @@ __pycache__/
 *.db-*
 .env
 .pytest_cache/
+promo/out/

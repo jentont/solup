@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<title>SolUP — промо</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Onest:wght@500;600;700;800&family=Unbounded:wght@700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="common.css" />
+<style>
+  /* Промо ~25 с: вступление → кейсы → апгрейд → краш → пополнение и вывод → финал. */
+  .big { position: absolute; left: 0; right: 0; text-align: center; font: 800 92px/1.02 var(--f-display); letter-spacing: -0.04em; }
+  .word { display: inline-block; }
+  .mark { position: absolute; width: 150px; height: 150px; left: 565px; }
+  .mark-glow { position: absolute; width: 420px; height: 420px; left: 430px; border-radius: 50%; background: radial-gradient(closest-side, rgba(41, 151, 255, 0.55), transparent); }
+
+  /* рулетка */
+  .rwin { position: absolute; left: 0; right: 0; top: 330px; height: 260px; overflow: hidden; }
+  .rwin::before, .rwin::after { content: ""; position: absolute; top: 0; bottom: 0; width: 220px; z-index: 3; }
+  .rwin::before { left: 0; background: linear-gradient(90deg, #000, transparent); }
+  .rwin::after { right: 0; background: linear-gradient(-90deg, #000, transparent); }
+  .strip { position: absolute; top: 36px; left: 0; height: 184px; }
+  .rline { position: absolute; left: 639px; top: 0; bottom: 0; width: 3px; background: var(--brand); box-shadow: 0 0 16px var(--brand); z-index: 4; border-radius: 2px; }
+  .winlabel { position: absolute; left: 0; right: 0; top: 610px; text-align: center; font: 700 34px var(--f-hand); color: var(--brand-ink); }
+
+  /* апгрейд */
+  .ucard { position: absolute; top: 330px; transform-origin: center; }
+  .gauge { position: absolute; left: 820px; top: 150px; width: 380px; height: 380px; }
+  .gauge svg { position: absolute; inset: 0; overflow: visible; }
+  .gauge .gimg { position: absolute; left: 100px; top: 86px; width: 180px; height: 180px; object-fit: contain; filter: drop-shadow(0 14px 18px rgba(0,0,0,.6)); }
+  .gauge .pct { position: absolute; left: 0; right: 0; top: 268px; text-align: center; font: 800 30px var(--f-display); letter-spacing: -0.03em; }
+  .gauge .res { position: absolute; left: 0; right: 0; top: 308px; text-align: center; font: 700 34px var(--f-hand); color: var(--ok); }
+  .needle { position: absolute; left: 190px; top: 190px; }
+  .needle i { position: absolute; left: -12px; top: -222px; border-left: 12px solid transparent; border-right: 12px solid transparent; border-top: 20px solid #fff; filter: drop-shadow(0 0 6px #fff); }
+
+  /* краш */
+  .board { position: absolute; left: 560px; top: 150px; width: 640px; height: 400px; border-radius: 30px; overflow: hidden; background: #111216; border: 1px solid rgba(255,255,255,.08); }
+  .board::before { content: ""; position: absolute; inset: 0; background: #fff; opacity: .05;
+    -webkit-mask: url(../webapp/public/brand/pattern.png) 0 0 / 240px 240px repeat; mask: url(../webapp/public/brand/pattern.png) 0 0 / 240px 240px repeat; }
+  .board svg { position: absolute; inset: 0; }
+  .mult { position: absolute; left: 0; right: 0; top: 140px; text-align: center; font: 800 86px var(--f-display); letter-spacing: -0.05em; font-variant-numeric: tabular-nums; }
+  .mult small { display: block; margin-top: 4px; font: 700 34px var(--f-hand); color: var(--brand-ink); letter-spacing: 0; }
+  .toast { position: absolute; left: 90px; top: 470px; padding: 18px 26px; border-radius: 22px; background: var(--card); border: 1px solid rgba(48, 209, 88, .4); font: 700 24px var(--f-body); }
+  .toast b { color: var(--ok); }
+  .betchip { position: absolute; left: 90px; top: 400px; font: 600 20px var(--f-body); color: var(--hint); }
+
+  /* пополнение */
+  .pay { position: absolute; top: 330px; width: 220px; height: 220px; border-radius: 40px; background: var(--card); border: 1px solid rgba(255,255,255,.08);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; font: 700 22px var(--f-body); }
+  .pay .ic { width: 96px; height: 96px; display: grid; place-items: center; }
+  .pay .ic img { width: 96px; height: 96px; object-fit: contain; }
+  .usdt { width: 96px; height: 96px; border-radius: 50%; background: #26a17b; color: #fff; display: grid; place-items: center; font: 800 54px var(--f-display); }
+
+  /* финал */
+  .flogo { position: absolute; left: 50%; top: 110px; width: 460px; margin-left: -230px; }
+  .fslogan { position: absolute; left: 0; right: 0; top: 330px; text-align: center; font: 800 46px var(--f-display); letter-spacing: -0.03em; }
+  .chips { position: absolute; left: 0; right: 0; top: 410px; display: flex; justify-content: center; gap: 12px; }
+  .fbtn { position: absolute; left: 0; right: 0; top: 490px; text-align: center; }
+  .fbot { position: absolute; left: 0; right: 0; top: 586px; text-align: center; font: 700 26px var(--f-body); color: var(--hint); }
+  .float { position: absolute; width: 130px; height: 130px; object-fit: contain; filter: drop-shadow(0 16px 20px rgba(0,0,0,.6)); }
+</style>
+</head>
+<body>
+<div id="stage">
+  <!-- 1. вступление -->
+  <div class="scene" id="s1">
+    <div class="mark-glow" id="glow1" style="top: 40px"></div>
+    <img class="mark" id="mark1" src="mark.svg" style="top: 175px" />
+    <div class="big" style="top: 360px"><span class="word" id="w1">Твой</span> <span class="word" id="w2">подарок</span></div>
+    <div class="big" style="top: 460px"><span class="word" id="w3">может</span> <span class="word blue" id="w4">больше.</span></div>
+  </div>
+
+  <!-- 2. кейсы -->
+  <div class="scene" id="s2">
+    <div class="head" id="h2"><div class="kicker">SolUP · кейсы</div><div class="hand">что внутри?</div><div class="title">Кейсы.</div></div>
+    <div class="rwin"><div class="strip" id="strip"></div><div class="rline"></div></div>
+    <div class="winlabel" id="winlabel">Plush Pepe · 600 000 <i class="coin"></i></div>
+  </div>
+
+  <!-- 3. апгрейд -->
+  <div class="scene" id="s3">
+    <div class="head" id="h3"><div class="kicker">SolUP · апгрейд</div><div class="hand">рискнёшь?</div><div class="title">Апгрейд.</div><div class="sub">Меняй дешёвый подарок на дорогой</div></div>
+    <div class="gcard r-epic ucard" id="uFrom" style="left: 90px"><img src="../webapp/public/gifts/toybear.webp" /><div class="n">Toy Bear</div><div class="v">3 000 <i class="coin"></i></div></div>
+    <div class="gcard r-epic ucard" id="uTo" style="left: 300px"><img src="../webapp/public/gifts/genielamp.webp" /><div class="n">Genie Lamp</div><div class="v">6 500 <i class="coin"></i></div></div>
+    <div class="gauge">
+      <svg viewBox="0 0 380 380">
+        <circle cx="190" cy="190" r="190" fill="none" stroke="#2a2b33" stroke-width="18" />
+        <circle id="arc" cx="190" cy="190" r="190" fill="none" stroke="var(--brand)" stroke-width="18" stroke-linecap="round" transform="rotate(-90 190 190)"
+                stroke-dasharray="0 1194" style="filter: drop-shadow(0 0 12px var(--brand))" />
+      </svg>
+      <img class="gimg" src="../webapp/public/gifts/genielamp.webp" />
+      <div class="pct" id="pct">0.00%</div>
+      <div class="res" id="res">победа!</div>
+      <div class="needle" id="needle"><i></i></div>
+    </div>
+  </div>
+
+  <!-- 4. краш -->
+  <div class="scene" id="s4">
+    <div class="head" id="h4"><div class="kicker">SolUP · краш</div><div class="hand">успей забрать</div><div class="title">Краш.</div></div>
+    <div class="betchip" id="bet">ставка 100 <i class="coin"></i> · автовывод ×3.40</div>
+    <div class="toast" id="toast">Забрали <b>×3.40</b> · +340 <i class="coin"></i></div>
+    <div class="board">
+      <svg viewBox="0 0 640 400"><defs><linearGradient id="fillg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2997ff" stop-opacity=".35"/><stop offset="1" stop-color="#2997ff" stop-opacity="0"/></linearGradient></defs>
+        <path id="area" fill="url(#fillg)" /><path id="curve" fill="none" stroke="#2997ff" stroke-width="6" stroke-linecap="round" style="filter: drop-shadow(0 0 8px #2997ff)" />
+        <circle id="dot" r="9" fill="#fff" /></svg>
+      <div class="mult" id="mult">1.00x<small id="multsub">летим</small></div>
+    </div>
+  </div>
+
+  <!-- 5. пополнение и вывод -->
+  <div class="scene" id="s5">
+    <div class="head" id="h5" style="left: 0; right: 0; text-align: center; top: 120px"><div class="kicker">SolUP · баланс</div><div class="hand" style="transform-origin: center">как удобно</div><div class="title">Пополнение и вывод.</div></div>
+    <div class="pay" id="p1" style="left: 170px"><div class="ic"><img src="../webapp/public/brand/star.svg" /></div>Stars</div>
+    <div class="pay" id="p2" style="left: 410px"><div class="ic"><img src="../webapp/public/brand/ton.svg" /></div>TON</div>
+    <div class="pay" id="p3" style="left: 650px"><div class="ic"><div class="usdt">₮</div></div>USDT</div>
+    <div class="pay" id="p4" style="left: 890px"><div class="ic"><img src="../webapp/public/gifts/plushpepe.webp" /></div>Подарки</div>
+    <div class="winlabel" id="paynote" style="top: 600px">вывод — настоящими подарками в Telegram</div>
+  </div>
+
+  <!-- 6. финал -->
+  <div class="scene" id="s6">
+    <img class="float" id="f1" src="../webapp/public/gifts/plushpepe.webp" style="left: 90px; top: 110px" />
+    <img class="float" id="f2" src="../webapp/public/gifts/swisswatch.webp" style="left: 1070px; top: 90px" />
+    <img class="float" id="f3" src="../webapp/public/gifts/heartlocket.webp" style="left: 130px; top: 480px" />
+    <img class="float" id="f4" src="../webapp/public/gifts/lootbag.webp" style="left: 1040px; top: 470px" />
+    <img class="flogo" id="flogo" src="../webapp/public/brand/solup-word-dark.svg" />
+    <div class="fslogan" id="fslogan">Твой подарок может <span class="blue">больше.</span></div>
+    <div class="chips" id="chips"><span class="chip">Кейсы</span><span class="chip">Апгрейд</span><span class="chip">Краш</span><span class="chip">Демо</span><span class="chip">Вывод подарками</span></div>
+    <div class="fbtn" id="fbtn"><span class="btn"><svg width="26" height="26" viewBox="0 0 24 24"><path fill="#fff" d="M21.4 4.2 2.9 11.3c-1.3.5-1.2 1.3-.2 1.6l4.7 1.5 1.8 5.6c.2.7.5.9 1 .9.4 0 .6-.2.9-.5l2.3-2.2 4.7 3.5c.9.5 1.5.2 1.7-.8l3.1-14.6c.3-1.3-.5-1.9-1.5-1.5zM9.8 14.6l-.4 4.2-1.6-5 9.3-5.9-7.3 6.7z"/></svg>Играть в Telegram</span></div>
+    <div class="fbot" id="fbot"></div>
+  </div>
+</div>
+
+<script src="common.js"></script>
+<script>
+const BOT = "@Solik_GameBot"; // юзернейм бота в финале — поменяйте на настоящий
+const DUR = 25;
+const S = { s1: [0, 3.4], s2: [3.2, 8.6], s3: [8.4, 13.4], s4: [13.2, 18.0], s5: [17.8, 21.2], s6: [21.0, 25] };
+const bg = buildBackground($("#stage"));
+$("#fbot").textContent = BOT;
+
+// лента рулетки
+const POOL = [["lolpop", "Lol Pop", "400", "common"], ["toybear", "Toy Bear", "3 000", "epic"], ["lovepotion", "Love Potion", "1 300", "rare"],
+  ["swisswatch", "Swiss Watch", "6 000", "epic"], ["jellybunny", "Jelly Bunny", "900", "uncommon"], ["lootbag", "Loot Bag", "15 000", "legendary"],
+  ["deskcalendar", "Desk Calendar", "350", "common"], ["genielamp", "Genie Lamp", "6 500", "epic"], ["crystalball", "Crystal Ball", "1 200", "rare"],
+  ["hexpot", "Hex Pot", "550", "uncommon"], ["preciouspeach", "Precious Peach", "50 000", "legendary"]];
+const WIN = 26, STEP = 172;
+const r = rand(9);
+const strip = $("#strip");
+const rcards = [];
+for (let i = 0; i < 34; i++) {
+  const [img, name, val, rar] = i === WIN ? ["plushpepe", "Plush Pepe", "600 000", "legendary"] : POOL[Math.floor(r() * POOL.length)];
+  const d = document.createElement("div");
+  d.className = `gcard r-${rar}`;
+  d.style.left = i * STEP + "px";
+  d.innerHTML = `<img src="${GIFT(img)}"><div class="n">${name}</div><div class="v">${val} <i class="coin"></i></div>`;
+  strip.appendChild(d);
+  rcards.push(d);
+}
+const spinOff = (t) => lerp(0, WIN * STEP + 78 - 640 + 18, ease.out5(seg(t, 4.0, 7.2)));
+
+function headIn(id, t, a) {
+  const kids = [...$(id).children];
+  kids.forEach((el, i) => rise(el, t, a + i * 0.08, 0.5, 28));
+}
+
+function render(t) {
+  bg(t);
+  for (const k in S) {
+    const [a, b] = S[k];
+    css($("#" + k), { opacity: sceneVis(t, a, b, 0.3, k === "s6" ? 0 : 0.3) });
+  }
+
+  // 1. вступление
+  if (t < 3.5) {
+    const m = ease.back(seg(t, 0.1, 0.7));
+    css($("#mark1"), { transform: `scale(${m}) rotate(${(1 - m) * -40}deg)` });
+    css($("#glow1"), { opacity: m * (0.8 + 0.2 * Math.sin(t * 3)), transform: `scale(${0.6 + 0.4 * m})` });
+    ["#w1", "#w2", "#w3", "#w4"].forEach((id, i) => {
+      const k = ease.out3(seg(t, 0.55 + i * 0.16, 1.05 + i * 0.16));
+      css($(id), { opacity: k, transform: `translateY(${(1 - k) * 60}px) scale(${0.9 + 0.1 * k})` });
+    });
+    const out = ease.inOut(seg(t, 2.9, 3.4));
+    css($("#s1"), { transform: `scale(${1 + out * 0.15})` });
+  }
+
+  // 2. кейсы
+  if (t > 3 && t < 8.8) {
+    headIn("#h2", t, 3.3);
+    const off = spinOff(t);
+    const v = Math.abs(spinOff(t + 0.02) - off) / 0.02;
+    css(strip, { transform: `translateX(${-off}px)`, filter: `blur(${clamp(v / 700, 0, 8)}px)` });
+    const pop = ease.back(seg(t, 7.25, 7.6));
+    rcards.forEach((c, i) => css(c, i === WIN
+      ? { transform: `scale(${1 + 0.18 * pop})`, zIndex: 2, boxShadow: `0 0 ${70 * pop}px rgba(255,159,10,${0.6 * pop})` }
+      : { opacity: 1 - 0.6 * seg(t, 7.25, 7.5) }));
+    rise($("#winlabel"), t, 7.45, 0.4, 16);
+  }
+
+  // 3. апгрейд
+  if (t > 8.2 && t < 13.6) {
+    headIn("#h3", t, 8.5);
+    rise($("#uFrom"), t, 8.9, 0.5, 30);
+    rise($("#uTo"), t, 9.05, 0.5, 30);
+    const chance = 0.4385;
+    const fill = ease.out3(seg(t, 9.5, 10.0)) * chance;
+    $("#arc").setAttribute("stroke-dasharray", `${fill * 1194} 1194`);
+    $("#pct").textContent = (fill * 100).toFixed(2) + "%";
+    const spin = ease.out5(seg(t, 10.1, 12.2));
+    css($("#needle"), { transform: `rotate(${spin * (360 * 4 + 0.3 * 360)}deg)` });
+    const win = ease.back(seg(t, 12.25, 12.6));
+    css($("#res"), { opacity: seg(t, 12.25, 12.4), transform: `scale(${0.6 + 0.4 * win}) rotate(-4deg)` });
+    css($(".gimg"), { transform: `scale(${1 + 0.15 * Math.sin(seg(t, 12.25, 12.7) * Math.PI)})` });
+    css($("#uFrom"), { filter: `grayscale(${seg(t, 12.25, 12.5)}) brightness(${1 - 0.5 * seg(t, 12.25, 12.5)})` });
+  }
+
+  // 4. краш
+  if (t > 13 && t < 18.2) {
+    headIn("#h4", t, 13.3);
+    rise($("#bet"), t, 13.7, 0.4, 14);
+    const t0 = 14.0, G = 0.55, crash = 4.27;
+    const tc = t0 + Math.log(crash) / G, tco = t0 + Math.log(3.4) / G;
+    const tt = clamp(t, t0, tc);
+    const m = Math.exp(G * (tt - t0));
+    const crashed = t >= tc;
+    const span = Math.max(tt - t0, 1.2);
+    const pts = [];
+    for (let i = 0; i <= 50; i++) {
+      const u = (tt - t0) * i / 50;
+      const mm = Math.exp(G * u);
+      pts.push([30 + (u / span) * 560, 370 - ((mm - 1) / Math.max(m - 1, 1.6)) * 300]);
+    }
+    const d = "M" + pts.map((p) => p.map((v) => v.toFixed(1)).join(",")).join("L");
+    $("#curve").setAttribute("d", d);
+    $("#area").setAttribute("d", d + `L${pts[pts.length - 1][0]},400L30,400Z`);
+    const [lx, ly] = pts[pts.length - 1];
+    $("#dot").setAttribute("cx", lx); $("#dot").setAttribute("cy", ly);
+    $("#curve").setAttribute("stroke", crashed ? "#ff453a" : "#2997ff");
+    $("#mult").firstChild.textContent = m.toFixed(2) + "x";
+    $("#multsub").textContent = crashed ? "краш!" : t < t0 ? "приём ставок" : "летим";
+    css($("#mult"), { color: crashed ? "#ff453a" : "#f5f5f7", transform: crashed ? `scale(${1 + 0.08 * Math.sin(seg(t, tc, tc + 0.3) * Math.PI)})` : "none" });
+    const tk = ease.back(seg(t, tco, tco + 0.35));
+    css($("#toast"), { opacity: seg(t, tco, tco + 0.15), transform: `translateY(${(1 - tk) * 20}px) scale(${0.9 + 0.1 * tk})` });
+  }
+
+  // 5. пополнение и вывод
+  if (t > 17.6 && t < 21.4) {
+    headIn("#h5", t, 17.9);
+    ["#p1", "#p2", "#p3", "#p4"].forEach((id, i) => {
+      const k = ease.back(seg(t, 18.4 + i * 0.12, 18.85 + i * 0.12));
+      css($(id), { opacity: seg(t, 18.4 + i * 0.12, 18.6 + i * 0.12), transform: `translateY(${Math.sin(t * 2 + i) * 6}px) scale(${0.6 + 0.4 * k})` });
+    });
+    rise($("#paynote"), t, 19.2, 0.5, 16);
+  }
+
+  // 6. финал
+  if (t > 20.8) {
+    const lk = ease.back(seg(t, 21.1, 21.6));
+    css($("#flogo"), { opacity: seg(t, 21.1, 21.3), transform: `scale(${0.7 + 0.3 * lk})` });
+    rise($("#fslogan"), t, 21.5, 0.5, 20);
+    $$("#chips .chip").forEach((c, i) => rise(c, t, 21.8 + i * 0.07, 0.4, 14));
+    const bk = ease.back(seg(t, 22.3, 22.7));
+    css($("#fbtn"), { opacity: seg(t, 22.3, 22.45), transform: `scale(${(0.8 + 0.2 * bk) * (1 + 0.025 * Math.sin(t * 5))})` });
+    rise($("#fbot"), t, 22.6, 0.4, 12);
+    ["#f1", "#f2", "#f3", "#f4"].forEach((id, i) => {
+      const k = ease.back(seg(t, 21.2 + i * 0.1, 21.7 + i * 0.1));
+      css($(id), { transform: `translateY(${Math.sin(t * 1.8 + i * 1.7) * 12}px) rotate(${Math.sin(t * 1.2 + i) * 8}deg) scale(${k})` });
+    });
+  }
+}
+
+boot(DUR, render);
+</script>
+</body>
+</html>
