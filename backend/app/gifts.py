@@ -42,10 +42,33 @@ async def set_connection_id(value: str | None) -> None:
         await s.commit()
 
 
+async def kv_get(key: str) -> str | None:
+    async with Session() as s:
+        kv = await s.get(KV, key)
+        return kv.value if kv else None
+
+
+async def kv_set(key: str, value: str) -> None:
+    async with Session() as s:
+        kv = await s.get(KV, key)
+        if kv:
+            kv.value = value
+        else:
+            s.add(KV(key=key, value=value))
+        await s.commit()
+
+
+async def get_relayer() -> tuple[int, str]:
+    """Релеер, подключённый через админку; если его нет — из .env."""
+    st = get_settings()
+    rid = await kv_get("relayer_id")
+    return (int(rid) if rid else st.relayer_user_id), (await kv_get("relayer_username") or st.relayer_username)
+
+
 async def handle_gift_message(bot: Bot, message: Message) -> str | None:
     """Обрабатывает подарок, пришедший на релеер. Возвращает текст для пользователя."""
     sender = message.from_user
-    if not sender or sender.id == get_settings().relayer_user_id:
+    if not sender or sender.id == (await get_relayer())[0]:
         return None
     if message.unique_gift:
         info = message.unique_gift

@@ -217,6 +217,7 @@ async def crash_ws(ws: WebSocket) -> None:
 @router.get("/deposit/info")
 async def deposit_info() -> dict:
     st = get_settings()
+    relayer = (await gifts.get_relayer())[1]
     rates = {}
     if cryptopay.enabled:
         for a in ASSETS:
@@ -225,7 +226,7 @@ async def deposit_info() -> dict:
         "stars": {"enabled": runtime.bot is not None, "coins_per_star": st.coins_per_star,
                   "bonus_percent": st.stars_bonus_percent},
         "crypto": {"enabled": cryptopay.enabled, "coins_per_unit": rates, "bonus_percent": st.crypto_bonus_percent},
-        "gifts": {"enabled": bool(st.relayer_username), "relayer": st.relayer_username},
+        "gifts": {"enabled": bool(relayer), "relayer": relayer},
     }
 
 

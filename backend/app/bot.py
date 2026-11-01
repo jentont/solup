@@ -1,4 +1,5 @@
 import logging
+import time
 
 from aiogram import Bot, Dispatcher, F, Router
 from aiogram.client.default import DefaultBotProperties
@@ -13,7 +14,7 @@ from pathlib import Path
 from aiogram.types import FSInputFile
 
 from . import gifts
-from .branding import esc, pe
+from .branding import emoji_id, esc, pe
 from .config import get_settings
 from .db import Session
 from .models import Deposit, InventoryItem, Item, Transaction, User, Withdrawal
@@ -37,7 +38,13 @@ def play_keyboard() -> InlineKeyboardMarkup | None:
     url = get_settings().webapp_url
     if not url:
         return None
-    return InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="🎮 Играть", web_app=WebAppInfo(url=url))]])
+    return InlineKeyboardMarkup(inline_keyboard=[[btn("🎮", "Играть", web_app=WebAppInfo(url=url))]])
+
+
+def btn(emoji: str, text: str, style: str | None = "primary", **kw) -> InlineKeyboardButton:
+    """Кнопка: синяя (style=primary) и с премиум-эмодзи из пака; если эмодзи нет в паке — обычный в тексте."""
+    icon = emoji_id(emoji)
+    return InlineKeyboardButton(text=text if icon else f"{emoji} {text}", icon_custom_emoji_id=icon, style=style, **kw)
 
 
 async def create_stars_link(bot: Bot, user_id: int, stars: int) -> str:
@@ -125,12 +132,20 @@ async def successful_payment(message: Message) -> None:
 @router.business_connection()
 async def business_connection(conn: BusinessConnection, bot: Bot) -> None:
     st = get_settings()
-    if conn.user.id != st.relayer_user_id:
+    relayer_id, _ = await gifts.get_relayer()
+    wait = float(await gifts.kv_get("relayer_wait_until") or 0)
+    # принимаем: текущий релеер, аккаунт админа или любой аккаунт, пока админ нажал «Подключить релеер»
+    if conn.user.id != relayer_id and not is_admin(conn.user.id) and time.time() > wait:
         log.warning("business connection от постороннего аккаунта %s", conn.user.id)
         return
     await gifts.set_connection_id(conn.id if conn.is_enabled else None)
+    if conn.is_enabled:
+        await gifts.kv_set("relayer_id", str(conn.user.id))
+        await gifts.kv_set("relayer_username", conn.user.username or "")
+        await gifts.kv_set("relayer_wait_until", "0")
+    who = f"@{conn.user.username}" if conn.user.username else str(conn.user.id)
     for admin in st.admin_ids:
-        await bot.send_message(admin, f"Релеер {'подключён ✅' if conn.is_enabled else 'отключён ❌'}")
+        await bot.send_message(admin, f"Релеер {who} {'подключён ✅' if conn.is_enabled else 'отключён ❌'}")
 
 
 @router.business_message(F.gift | F.unique_gift)
@@ -182,11 +197,12 @@ async def withdrawal_decision(cb: CallbackQuery, bot: Bot) -> None:
     await cb.message.edit_text(f"{cb.message.text}\n\n{note}")
 
 
-ADMIN_KB = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text="📊 Статистика", callback_data="adm:stats"),
-     InlineKeyboardButton(text="📤 Выводы", callback_data="adm:wd")],
-    [InlineKeyboardButton(text="🎁 Склад релеера", callback_data="adm:stock")],
-])
+def admin_kb() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [btn("📊", "Статистика", callback_data="adm:stats"), btn("📤", "Выводы", callback_data="adm:wd")],
+        [btn("🎁", "Склад релеера", callback_data="adm:stock")],
+        [btn("🔌", "Подключить релеер", style="success", callback_data="adm:relayer")],
+    ])
 
 
 @router.message(Command("admin"))
@@ -198,7 +214,7 @@ async def admin_panel(message: Message) -> None:
         "Админ-панель SolUP\n\n"
         "/stats — статистика\n/withdrawals — заявки на вывод\n/stock — подарки на релеере\n"
         "/user <id> — игрок\n/addbalance <id> <монеты> — начислить\n/setprice <коллекция> | <цена> — цена подарка",
-        reply_markup=ADMIN_KB)
+        reply_markup=admin_kb())
 
 
 @router.callback_query(F.data.startswith("adm:"))
@@ -213,6 +229,15 @@ async def admin_buttons(cb: CallbackQuery, bot: Bot) -> None:
         await list_withdrawals(cb.message.model_copy(update={"from_user": cb.from_user}), bot)
     elif action == "stock":
         await stock(cb.message.model_copy(update={"from_user": cb.from_user}), bot)
+    elif action == "relayer":
+        await gifts.kv_set("relayer_wait_until", str(time.time() + 15 * 60))
+        me = await bot.get_me()
+        await cb.message.answer(
+            "Подключение релеера — 15 минут.\n\n"
+            "1. Зайдите в аккаунт-релеер (нужен Telegram Premium).\n"
+            "2. Настройки → Telegram для бизнеса → Чат-боты.\n"
+            f"3. Добавьте @{me.username} и включите права на подарки и звёзды.\n\n"
+            "Бот сам запомнит этот аккаунт и пришлёт сюда «Релеер подключён ✅».")
 
 
 @router.message(Command("stats"))

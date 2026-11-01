@@ -52,6 +52,11 @@ def pe(ch: str) -> str:
     return f'<tg-emoji emoji-id="{eid}">{ch}</tg-emoji>' if eid else ch
 
 
+def emoji_id(ch: str) -> str | None:
+    """custom_emoji_id для иконки в кнопке (или None, если такого эмодзи нет в паке)."""
+    return _ids.get(ch) or _ids.get(ch.replace("️", ""))
+
+
 def esc(text: str) -> str:
     return html.escape(text or "")
 
